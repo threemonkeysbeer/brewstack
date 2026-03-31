@@ -348,7 +348,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 <div class="page" id="page-tanque">
   <div class="ph">
     <div><div class="pt">EM TAN<span>QUE</span></div><div class="ps" id="tanque-sub"></div></div>
-    <button class="btn btn-p" onclick="openLoteModal()">＋ Novo Lote</button>
+    <button class="btn btn-p" onclick="openLoteModalTanque()">＋ Novo Lote Em Tanque</button>
   </div>
   <div id="tanque-container"></div>
 </div>
@@ -1196,6 +1196,7 @@ function renderDashboard(){
   const sel=document.getElementById('dash-filter-receita');
   const cur=sel.value;
   sel.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===cur?' selected':''}>${r.nome}</option>`).join('');
+  migrarEmTanque();
   renderDashTable();renderDashValidade();renderDashCDTable();
   // Update tanque badge
   const nTanque=(d.lotes||[]).filter(l=>l.emTanque&&!isLoteEncerrado(l)).length;
@@ -1887,7 +1888,10 @@ function openLoteModal(id){
 function openLoteModalForReceita(recId){
   _openLoteModal(null,recId);
 }
-function _openLoteModal(id,preRecId){
+function openLoteModalTanque(){
+  _openLoteModal(null,null,true); // true = forçar Em Tanque
+}
+function _openLoteModal(id,preRecId,forcarTanque){
   editLoteId=id||null;
   const d=getData();
   const sel=document.getElementById('lote-receita');
@@ -1936,8 +1940,8 @@ function _openLoteModal(id,preRecId){
     document.getElementById('lote-vol-env-display').textContent='—';
     document.getElementById('lote-rend-display').textContent='—';
     document.getElementById('lote-dias-info').style.display='none';
-    document.getElementById('lote-status-envasado').checked=true;
-    document.getElementById('lote-status-tanque').checked=false;
+    document.getElementById('lote-status-envasado').checked=!forcarTanque;
+    document.getElementById('lote-status-tanque').checked=!!forcarTanque;
     onLoteStatusChange();
     if(preRecId){sel.value=preRecId;onLoteReceitaChange(null,{});}
     else{document.getElementById('lote-skus-fields').innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--td)">Selecione a receita</div>';
@@ -1959,8 +1963,10 @@ function onLoteStatusChange(){
 // EM TANQUE
 // ════════════════════════════════════════════
 function renderTanque(){
+  // Garante que lotes antigos sem o campo emTanque sejam migrados antes de filtrar
+  migrarEmTanque();
   const d=getData();
-  const lotesTanque=d.lotes.filter(l=>l.emTanque&&!isLoteEncerrado(l));
+  const lotesTanque=d.lotes.filter(l=>l.emTanque===true&&!isLoteEncerrado(l));
   // Update badge
   const badge=document.getElementById('badge-tanque');
   if(badge){badge.textContent=lotesTanque.length;badge.style.display=lotesTanque.length>0?'':'none';}
@@ -3037,13 +3043,18 @@ function migrarEmTanque(){
   let alterou=false;
   d.lotes.forEach(l=>{
     if(l.emTanque!==undefined&&l.emTanque!==null)return;
-    // Lote sem movimentações de entrada iniciais e não encerrado = em tanque
-    const temEntradas=d.movs.some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
+    const temEntradas=(d.movs||[]).some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
     const enc=isLoteEncerrado(l);
+    // Só marca como Em Tanque se não tem entradas E não está encerrado E tem lotes ativos
     l.emTanque=!temEntradas&&!enc;
     alterou=true;
   });
-  if(alterou)save(d);
+  if(alterou){
+    // Salva direto no cache e agenda sync, sem re-renderizar
+    _cache=d;
+    localStorage.setItem('bstack3',JSON.stringify(d));
+    if(_gToken){_dirty=true;clearTimeout(_saveTimer);_saveTimer=setTimeout(async()=>{_dirty=false;await saveRemote(_cache);},2000);}
+  }
 }
 
 initData().then(()=>{
