@@ -726,6 +726,24 @@ const ALLOWED_DOMAIN = 'threemonkeysbeer.com';
 const DRIVE_FILE_NAME = 'brewstack-data.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
+
+// ===== AUDIT SYSTEM V4 =====
+function auditLog(tipo, detalhe){
+  try{
+    const entry = {
+      id: Date.now() + '_' + Math.random().toString(36).slice(2),
+      tipo,
+      detalhe,
+      usuario: _userEmail || '—',
+      data: new Date().toISOString()
+    };
+    if(!_cache.audit) _cache.audit = [];
+    _cache.audit.push(entry);
+    auditLog('update','Alteração no sistema');
+saveWithAudit('update','Alteração no sistema');
+  }catch(e){console.warn('audit error', e);}
+}
+
 let _cache = null;
 let _dirty = false;
 let _saveTimer = null;
@@ -908,14 +926,16 @@ function save(d){
         }
       }
     }
-    await saveRemote(_cache);
+    await auditLog('update','Alteração no sistema');
+saveWithAudit('update','Alteração no sistema');
   },800);
 }
 
 async function flushSave(){
   if(!_dirty||!_gToken)return;
   clearTimeout(_saveTimer);_dirty=false;
-  await saveRemote(_cache);
+  await auditLog('update','Alteração no sistema');
+saveWithAudit('update','Alteração no sistema');
 }
 
 async function initDriveData(){
@@ -938,7 +958,8 @@ async function initDriveData(){
         _cache=JSON.parse(local);
         if(_cache&&_cache.receitas&&_cache.receitas.length>0){
           showLoading('Migrando dados para o Drive...');
-          await saveRemote(_cache);
+          await auditLog('update','Alteração no sistema');
+saveWithAudit('update','Alteração no sistema');
           hideLoading();
           toast('Dados migrados para o Google Drive!','s');
           renderDashboard();setInterval(pollRemote,120000);return;
@@ -947,7 +968,8 @@ async function initDriveData(){
     }
     // Tudo novo: seed
     _cache=emptyData();seedIfEmpty();
-    await saveRemote(_cache);
+    await auditLog('update','Alteração no sistema');
+saveWithAudit('update','Alteração no sistema');
     hideLoading();renderDashboard();setInterval(pollRemote,120000);
   }catch(e){
     hideLoading();
@@ -1446,6 +1468,23 @@ function exportDashPDF(origem){
 <script>
   window.onload=function(){setTimeout(function(){window.print();},400);};
 <\/script>
+
+<div id="auditPanel" style="padding:10px;">
+  <h3>Histórico Auditável</h3>
+  <button onclick="rollbackLast()" style="margin-bottom:10px;">↩️ Desfazer última ação</button>
+  <div id="auditList"></div>
+</div>
+
+
+<div id="auditPanelV6" style="padding:10px;">
+  <h3>Histórico Auditável (V6)</h3>
+  <div style="display:flex;gap:8px;margin-bottom:8px;">
+    <input id="fUser" placeholder="Filtrar por usuário" oninput="renderAuditV6()"/>
+    <input id="fType" placeholder="Filtrar por tipo" oninput="renderAuditV6()"/>
+  </div>
+  <div id="auditList"></div>
+</div>
+
 </body></html>`;
 
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
@@ -3025,5 +3064,137 @@ initData().then(()=>{
   setInterval(pollRemote,120000);
 });
 </script>
+
+<div id="auditPanel" style="padding:10px;">
+  <h3>Histórico Auditável</h3>
+  <button onclick="rollbackLast()" style="margin-bottom:10px;">↩️ Desfazer última ação</button>
+  <div id="auditList"></div>
+</div>
+
+
+<div id="auditPanelV6" style="padding:10px;">
+  <h3>Histórico Auditável (V6)</h3>
+  <div style="display:flex;gap:8px;margin-bottom:8px;">
+    <input id="fUser" placeholder="Filtrar por usuário" oninput="renderAuditV6()"/>
+    <input id="fType" placeholder="Filtrar por tipo" oninput="renderAuditV6()"/>
+  </div>
+  <div id="auditList"></div>
+</div>
+
 </body>
 </html>
+
+
+function renderAudit(){
+  const el = document.getElementById('auditList');
+  if(!el) return;
+  const arr = (_cache.audit || []).slice().reverse();
+  el.innerHTML = arr.map(a=>{
+    const d = new Date(a.data).toLocaleString();
+    return `<div style="padding:6px;border-bottom:1px solid #eee;">
+      <b>${a.tipo}</b> - ${a.detalhe}<br>
+      <span style="color:#999">${d} • ${a.usuario}</span>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(renderAudit, 1000);
+});
+
+// ===== ROLLBACK SYSTEM =====
+function rollbackLast(){
+  if(!_cache.audit || _cache.audit.length < 2){
+    alert('Nada para reverter');
+    return;
+  }
+  // Remove last action
+  _cache.audit.pop();
+  const prev = _cache.audit[_cache.audit.length - 1];
+  alert('Rollback aplicado para: ' + prev.tipo);
+  saveWithAudit('update','Alteração no sistema');
+}
+
+
+// ===== V6 ENHANCED AUDIT + SNAPSHOT + LOCK =====
+let _lock = null;
+
+function acquireLock(){
+  if(_lock && _lock !== _userEmail){
+    alert('Outro usuário está editando. Tente novamente.');
+    return false;
+  }
+  _lock = _userEmail || '—';
+  return true;
+}
+
+function releaseLock(){
+  _lock = null;
+}
+
+function snapshotState(){
+  return JSON.parse(JSON.stringify(_cache));
+}
+
+function auditLogV6(tipo, detalhe){
+  try{
+    const entry = {
+      id: Date.now() + '_' + Math.random().toString(36).slice(2),
+      tipo,
+      detalhe,
+      usuario: _userEmail || '—',
+      data: new Date().toISOString(),
+      snapshot: snapshotState()
+    };
+    if(!_cache.audit) _cache.audit = [];
+    _cache.audit.push(entry);
+  }catch(e){console.warn('audit v6 error', e);}
+}
+
+// wrap save to include lock + audit
+const _origSave = (typeof saveRemote === 'function') ? saveRemote : async function(){};
+async function saveWithAudit(tipo, detalhe){
+  if(!acquireLock()) return;
+  auditLogV6(tipo || 'update', detalhe || 'Alteração');
+  await _origSave(_cache);
+  releaseLock();
+}
+
+// ===== ROLLBACK FULL =====
+function rollbackTo(index){
+  if(!_cache.audit || !_cache.audit[index]){
+    alert('Registro inválido');
+    return;
+  }
+  const snap = _cache.audit[index].snapshot;
+  if(!snap){ alert('Sem snapshot para este registro'); return; }
+  _cache = JSON.parse(JSON.stringify(snap));
+  _origSave(_cache);
+  renderAuditV6();
+  alert('Rollback aplicado');
+}
+
+// ===== FILTERS + RENDER =====
+function renderAuditV6(){
+  const el = document.getElementById('auditList');
+  if(!el) return;
+  const userF = (document.getElementById('fUser')||{}).value || '';
+  const typeF = (document.getElementById('fType')||{}).value || '';
+  let arr = (_cache.audit || []).slice().reverse();
+  if(userF) arr = arr.filter(a=> (a.usuario||'').includes(userF));
+  if(typeF) arr = arr.filter(a=> (a.tipo||'')===typeF);
+
+  el.innerHTML = arr.map((a, idx)=>{
+    const d = new Date(a.data).toLocaleString();
+    const realIndex = (_cache.audit.length - 1) - idx;
+    return `<div style="padding:8px;border-bottom:1px solid #eee;">
+      <div><b>${a.tipo}</b> — ${a.detalhe}</div>
+      <div style="color:#999">${d} • ${a.usuario}</div>
+      <button onclick="rollbackTo(${realIndex})" style="margin-top:6px;">↩️ Voltar para este ponto</button>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(renderAuditV6, 1000);
+});
