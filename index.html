@@ -1021,8 +1021,8 @@ function updateSidebarStatus(){
 function getSkuQty(loteId,skuId){
   const d=getData();
   const lote=d.lotes.find(l=>l.id===loteId);
-  if(!lote)return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||'');
-  if(lote.emTanque)return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||''); // lotes em tanque não entram no estoque
+  if(!lote)return 0;
+  if(lote.emTanque)return 0; // lotes em tanque não entram no estoque
   const ls=lote.skus.find(s=>s.skuId===skuId);
   const inicial=ls?ls.qty:0;
   let q=inicial;
@@ -1102,7 +1102,7 @@ function calcVolEnvasado(skuQtds, receita){
 }
 
 function getBarrilPct(lote,receita){
-  if(!receita)return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||'');
+  if(!receita)return 0;
   let total=0,barL=0;
   lote.skus.forEach(ls=>{
     const sku=receita.skus.find(x=>x.id===ls.skuId);
@@ -1200,7 +1200,7 @@ function renderDashboard(){
   sel.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===cur?' selected':''}>${r.nome}</option>`).join('');
   renderDashTable();renderDashValidade();renderDashCDTable();
   // Update tanque badge
-  const nTanque=(d.lotes||[]).filter(l=>(l.emTanque===true || !l.dtEnv)&&!isLoteEncerrado(l)).length;
+  const nTanque=(d.lotes||[]).filter(l=>l.emTanque&&!isLoteEncerrado(l)).length;
   const bt=document.getElementById('badge-tanque');if(bt){bt.textContent=nTanque;bt.style.display=nTanque>0?'':'none';}
   const selCD=document.getElementById('dash-filter-cd');
   if(selCD){const curCD=selCD.value;selCD.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===curCD?' selected':''}>${r.nome}</option>`).join('');}
@@ -1240,7 +1240,7 @@ function renderDashTable(){
 
   // Ordem dos grupos: Barril PET → Barril inox → Garrafa → Lata
   function grupoOrdem(r){
-    if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L') return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||'');
+    if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L') return 0;
     if(r.tipo==='Barril') return 1;
     if(r.tipo==='Garrafa') return 2;
     return 3; // Lata
@@ -1310,7 +1310,7 @@ function renderDashCDTable(){
   if(!tbody)return;
   if(!rows.length){tbody.innerHTML=`<tr><td colspan="4" class="empty">Nenhum produto no CD ainda</td></tr>`;return;}
   function grupoOrdem(r){
-    if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L')return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||'');
+    if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L')return 0;
     if(r.tipo==='Barril')return 1;if(r.tipo==='Garrafa')return 2;return 3;
   }
   function grupoLabel(r){
@@ -1379,7 +1379,7 @@ function exportDashPDF(origem){
   const titulo=isFab?'🏭 BrewStack — Estoque da Fábrica':'🏢 BrewStack — Estoque do CD Rio';
 
   function grupoOrdem(r){
-    if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L')return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||'');
+    if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L')return 0;
     if(r.tipo==='Barril')return 1;if(r.tipo==='Garrafa')return 2;return 3;
   }
   function grupoLabel(r){
@@ -1662,7 +1662,7 @@ function renderHistorico(){
         <div class="hist-dot ${m.tipo}"></div>
         <div class="hist-body">
           <div class="hist-title"><strong class="${sc}">${qtyStr}</strong> ${rec?rec.nome:''} · ${sku?sku.nome:''}${destinoTag}</div>
-          <div class="hist-meta">${h.usuario ? '<span style="color:#999">'+h.usuario+'</span> • ' : ''}${dt} · ${l?l.codigo:'—'}${m.obs?' · '+m.obs:''}${m.usuario&&m.usuario!=='—'?' · <span style="font-family:var(--fm);font-size:9px;color:var(--td)">'+m.usuario+'</span>':''}</div>
+          <div class="hist-meta">${dt} · ${l?l.codigo:'—'}${m.obs?' · '+m.obs:''}${m.usuario&&m.usuario!=='—'?' · <span style="font-family:var(--fm);font-size:9px;color:var(--td)">'+m.usuario+'</span>':''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <div class="hist-qty ${sc}">${qtyStr}</div>
@@ -1739,7 +1739,7 @@ function renderLotes(){
     if(sortVal==='lote-za')return (b.codigo||'').localeCompare(a.codigo||'');
     if(sortVal==='antigo')return (a.dtEnv||a.dtProd||'').localeCompare(b.dtEnv||b.dtProd||'');
     if(sortVal==='novo')return (b.dtEnv||b.dtProd||'').localeCompare(a.dtEnv||a.dtProd||'');
-    return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||''); // alfa — grupos são ordenados abaixo
+    return 0; // alfa — grupos são ordenados abaixo
   };
   Object.values(grupos).forEach(arr=>arr.sort(sortFn));
 
@@ -1837,7 +1837,7 @@ function renderLoteCard(l,d,rec){
       <span class="lote-sku-name">${nome}</span>
       <span class="lote-sku-qty ${qty===0?'':'ok'}" style="${qty===0?'color:var(--td)':''}">${q.principal}${CAIXA[nome]?' cx':''}</span>
       ${subLabel?`<span class="lote-sku-sub">${subLabel}</span>`:''}
-      ${(l.emTanque===true || !l.dtEnv)?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
+      ${l.emTanque?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
     </div>`;
   }).join('');
   // perdas
@@ -1851,7 +1851,7 @@ function renderLoteCard(l,d,rec){
       <div>
         <div class="lote-id">${l.codigo}</div>
         <div class="lote-meta">Prod. ${fmtDate(l.dtProd)} · Envase ${fmtDate(l.dtEnv)}${l.obs?' · '+l.obs:''}</div>
-        <div style="margin-top:5px">${(l.emTanque===true || !l.dtEnv)?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
+        <div style="margin-top:5px">${l.emTanque?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
       </div>
       <div style="display:flex;gap:5px">
         <button class="btn-icon" title="Editar" onclick="openLoteModal('${l.id}')">✏️</button>
@@ -1900,7 +1900,7 @@ function _openLoteModal(id,preRecId){
     document.getElementById('lote-dt-env').value=l.dtEnv||'';
     document.getElementById('lote-obs').value=l.obs||'';
     // Status: em tanque ou envasado
-    const isTanque=!!(l.emTanque===true || !l.dtEnv);
+    const isTanque=!!l.emTanque;
     document.getElementById('lote-status-tanque').checked=isTanque;
     document.getElementById('lote-status-envasado').checked=!isTanque;
     // Reconstrói as qtds: se em tanque usa qtdEstimada, senão usa movimentações
@@ -1949,7 +1949,7 @@ function onLoteStatusChange(){
 // ════════════════════════════════════════════
 function renderTanque(){
   const d=getData();
-  const lotesTanque=d.lotes.filter(l=>(l.emTanque===true || !l.dtEnv)&&!isLoteEncerrado(l));
+  const lotesTanque=d.lotes.filter(l=>l.emTanque&&!isLoteEncerrado(l));
   // Update badge
   const badge=document.getElementById('badge-tanque');
   if(badge){badge.textContent=lotesTanque.length;badge.style.display=lotesTanque.length>0?'':'none';}
@@ -2729,7 +2729,7 @@ function toast(msg,type=''){
 
 function getSkuQtyCD(loteId, skuId){
   const d=getData();
-  if(!d.cdMovs)return (a.receita||'').localeCompare(b.receita||'') || (a.id||'').localeCompare(b.id||'');
+  if(!d.cdMovs)return 0;
   let q=0;
   d.cdMovs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
     if(m.tipo==='entrada')q+=m.qty;
