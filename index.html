@@ -868,8 +868,6 @@ async function saveRemote(d){
   if(!(await ensureAuth()))return;
   if(!_driveFileId)return;
   try{
-    // Antes de salvar, verifica se há versão mais recente no Drive (evita sobrescrita)
-    // Só faz merge se não há mudanças pendentes locais em progresso
     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_driveFileId}?uploadType=media`,
       {method:'PATCH',headers:{Authorization:'Bearer '+_gToken,'Content-Type':'application/json'},
        body:JSON.stringify(d)});
@@ -1733,20 +1731,25 @@ function renderLotes(){
     grupos[rid].push(l);
   });
 
-  // Ordena lotes dentro de cada grupo E ordena os grupos conforme sortVal
+  // Para ordenações não-alfabéticas, ordena dentro de cada grupo
   const sortFn=(a,b)=>{
     if(sortVal==='lote-az')return (a.codigo||'').localeCompare(b.codigo||'');
     if(sortVal==='lote-za')return (b.codigo||'').localeCompare(a.codigo||'');
     if(sortVal==='antigo')return (a.dtEnv||a.dtProd||'').localeCompare(b.dtEnv||b.dtProd||'');
     if(sortVal==='novo')return (b.dtEnv||b.dtProd||'').localeCompare(a.dtEnv||a.dtProd||'');
-    return 0; // alfa — grupos são ordenados abaixo
+    return 0;
   };
   Object.values(grupos).forEach(arr=>arr.sort(sortFn));
 
-  // Ordena grupos (receitas): sempre alfabético na aba Lotes
+  // Ordena grupos (receitas) alfabeticamente
   const recIds=Object.keys(grupos).sort((a,b)=>{
     const na=recMap[a]?recMap[a].nome:'';
     const nb=recMap[b]?recMap[b].nome:'';
+    // Para lote-az/za também ordena os grupos pelo primeiro lote
+    if(sortVal==='lote-az')return (grupos[a][0]?.codigo||'').localeCompare(grupos[b][0]?.codigo||'');
+    if(sortVal==='lote-za')return (grupos[b][0]?.codigo||'').localeCompare(grupos[a][0]?.codigo||'');
+    if(sortVal==='antigo')return (grupos[a][0]?.dtEnv||grupos[a][0]?.dtProd||'').localeCompare(grupos[b][0]?.dtEnv||grupos[b][0]?.dtProd||'');
+    if(sortVal==='novo')return (grupos[b][0]?.dtEnv||grupos[b][0]?.dtProd||'').localeCompare(grupos[a][0]?.dtEnv||grupos[a][0]?.dtProd||'');
     return na.localeCompare(nb);
   });
 
@@ -1900,7 +1903,15 @@ function _openLoteModal(id,preRecId){
     document.getElementById('lote-dt-env').value=l.dtEnv||'';
     document.getElementById('lote-obs').value=l.obs||'';
     // Status: em tanque ou envasado
-    const isTanque=!!l.emTanque;
+    // Se emTanque não está definido no lote, infere pelo histórico:
+    // lote sem movimentações de entrada = provavelmente em tanque
+    let isTanque;
+    if(l.emTanque===undefined||l.emTanque===null){
+      const temEntradas=d.movs.some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
+      isTanque=!temEntradas&&!isLoteEncerrado(l);
+    } else {
+      isTanque=!!l.emTanque;
+    }
     document.getElementById('lote-status-tanque').checked=isTanque;
     document.getElementById('lote-status-envasado').checked=!isTanque;
     // Reconstrói as qtds: se em tanque usa qtdEstimada, senão usa movimentações
@@ -3019,8 +3030,25 @@ function migrarNomesSour(){
   if(alterou)save(d);
 }
 
+function migrarEmTanque(){
+  // Popula emTanque em lotes que ainda não têm o campo definido
+  const d=getData();
+  if(!d.lotes||!d.lotes.length)return;
+  let alterou=false;
+  d.lotes.forEach(l=>{
+    if(l.emTanque!==undefined&&l.emTanque!==null)return;
+    // Lote sem movimentações de entrada iniciais e não encerrado = em tanque
+    const temEntradas=d.movs.some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
+    const enc=isLoteEncerrado(l);
+    l.emTanque=!temEntradas&&!enc;
+    alterou=true;
+  });
+  if(alterou)save(d);
+}
+
 initData().then(()=>{
   migrarNomesSour();
+  migrarEmTanque();
   renderDashboard();
   setInterval(pollRemote,120000);
 });
