@@ -105,7 +105,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .finfo strong{color:var(--text)}
 .fdivider{height:1px;background:var(--b1);margin:4px 0}
 .fsection{font-family:var(--fm);font-size:9px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:-8px}
-/* ── LOTES agrupados por receita ── */
 .rec-group{margin-bottom:14px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden}
 .rec-group-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:background .15s}
 .rec-group-head:hover{background:var(--s2)}
@@ -113,7 +112,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .rec-group-meta{font-family:var(--fm);font-size:10px;color:var(--tm);margin-top:2px}
 .rec-group-body{border-top:1px solid var(--b1);padding:12px}
 .rec-group-body.hidden{display:none}
-/* lote card inside group */
 .lote-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:14px 16px;margin-bottom:8px}
 .lote-card:last-child{margin-bottom:0}
 .lote-card.enc{opacity:.55}
@@ -134,7 +132,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .exp-bar.warn{background:var(--warn-dim);color:var(--warn)}
 .exp-bar.crit{background:var(--red-dim);color:var(--red)}
 .exp-bar.enc{background:rgba(255,255,255,.04);color:var(--tm)}
-/* descida */
 .desc-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
 .desc-lote-head{padding:10px 16px;background:var(--s2);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
 .desc-lote-head:hover{background:var(--s3)}
@@ -151,7 +148,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .desc-foot{padding:16px 0 0;margin-top:8px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .desc-preview{font-family:var(--fm);font-size:11px;color:var(--tm)}
 .desc-preview span{color:var(--amber)}
-/* hist */
 .hist-row{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--b1)}
 .hist-row:last-child{border-bottom:none}
 .hist-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
@@ -162,7 +158,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .hist-meta{font-family:var(--fm);font-size:10px;color:var(--tm);margin-top:2px}
 .hist-qty{font-family:var(--fd);font-size:18px;letter-spacing:1px;flex-shrink:0}
 .hist-qty.s{color:var(--amber)}.hist-qty.e{color:var(--green)}
-/* analytics */
 .recipe-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
 .recipe-head{padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
 .recipe-name{font-family:var(--fd);font-size:20px;letter-spacing:1.5px}
@@ -179,7 +174,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .rl-stats{display:flex;gap:12px;font-family:var(--fm);font-size:11px;flex-wrap:wrap}
 .rl-stat{display:flex;flex-direction:column;align-items:flex-end}
 .rl-stat span:first-child{color:var(--tm);font-size:9px;letter-spacing:.5px;text-transform:uppercase}
-/* insumos */
 .ins-section{margin-bottom:24px}
 .ins-section-title{font-family:var(--fm);font-size:10px;color:var(--tm);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--b1)}
 .ins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
@@ -191,7 +185,6 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .ins-qty{font-family:var(--fd);font-size:26px;letter-spacing:1px;color:var(--amber)}
 .ins-qty.low{color:var(--warn)}.ins-qty.crit{color:var(--red)}
 .ins-actions{display:flex;gap:6px}
-/* toast */
 .toast-wrap{position:fixed;bottom:22px;right:22px;z-index:800;display:flex;flex-direction:column;gap:8px}
 .toast{background:var(--s2);border:1px solid var(--b2);border-left:3px solid var(--amber);padding:11px 16px;border-radius:var(--r);font-size:13px;max-width:300px;animation:tIn .2s ease;box-shadow:0 4px 24px rgba(0,0,0,.5)}
 .toast.s{border-left-color:var(--green)}.toast.e{border-left-color:var(--red)}
@@ -206,75 +199,51 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .empty{text-align:center;padding:44px;color:var(--tm)}
 .empty-icon{font-size:34px;opacity:.3;margin-bottom:10px}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
-/* perdas section in modal */
 .perda-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b1)}
 .perda-row:last-child{border-bottom:none}
 .perda-label{flex:1;font-size:13px}
 .perda-label small{font-family:var(--fm);font-size:10px;color:var(--tm);display:block}
 .perda-input{width:90px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:7px 10px;border-radius:var(--r);font-family:var(--fm);font-size:13px;text-align:right;outline:none;transition:border-color .15s}
 .perda-input:focus{border-color:var(--amber)}
-/* insumo entry modal */
 .ins-entry-row{display:flex;align-items:center;gap:10px;padding:5px 0}
 .ins-entry-label{flex:1;font-size:13px}
 .ins-entry-input{width:100px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:7px 10px;border-radius:var(--r);font-family:var(--fm);font-size:13px;text-align:right;outline:none;transition:border-color .15s}
 .ins-entry-input:focus{border-color:var(--amber)}
-
-/* ════════════════════════════════════════════
-   MOBILE RESPONSIVE
-   ════════════════════════════════════════════ */
 .mob-header{display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:var(--s1);border-bottom:1px solid var(--b1);padding:12px 16px;align-items:center;justify-content:space-between;gap:10px}
 .mob-logo{font-family:var(--fd);font-size:20px;letter-spacing:2px;color:var(--amber)}
 .mob-logo em{color:var(--text);font-style:normal}
 .mob-hamburger{background:none;border:1px solid var(--b2);color:var(--tm);width:36px;height:36px;border-radius:var(--r);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .mob-page-title{font-family:var(--fm);font-size:11px;color:var(--tm);letter-spacing:1px;text-transform:uppercase;flex:1;text-align:center}
-
 @media(max-width:768px){
   .mob-header{display:flex}
   .app{flex-direction:column;padding-top:57px}
-  .sidebar{
-    position:fixed;top:57px;left:0;bottom:0;z-index:400;
-    width:260px;transform:translateX(-100%);
-    transition:transform .25s ease;overflow-y:auto;
-  }
+  .sidebar{position:fixed;top:57px;left:0;bottom:0;z-index:400;width:260px;transform:translateX(-100%);transition:transform .25s ease;overflow-y:auto}
   .sidebar.open{transform:translateX(0)}
   .sidebar-overlay{display:none;position:fixed;inset:0;top:57px;background:rgba(0,0,0,.6);z-index:399}
   .sidebar-overlay.open{display:block}
   .main{padding:16px 14px 80px;min-width:0;width:100%}
-  /* Títulos menores */
   .pt{font-size:26px;letter-spacing:2px}
   .ph{margin-bottom:18px;padding-bottom:14px}
-  /* Stats grid: 2 por linha */
   .stats{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
   .stat{padding:12px 14px}
   .stat-val{font-size:26px}
-  /* Dashboard grid: coluna única */
   div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
-  /* Tabelas: scroll horizontal */
   .card{overflow-x:auto}
   table{min-width:480px}
   th,td{padding:8px 12px;font-size:12px}
-  /* Lote cards */
   .lote-card{padding:12px}
   .lote-grid{grid-template-columns:repeat(3,1fr)!important}
   .lote-stat-val{font-size:15px}
-  /* Rec group headers */
   .rec-group-name{font-size:16px}
-  /* Modais: tela cheia no mobile */
   .modal,.modal.wide{width:100%!important;max-width:100%!important;margin:0;border-radius:0;min-height:100dvh;max-height:100dvh;overflow-y:auto}
   .ov{padding:0!important;align-items:flex-start}
-  /* Botões ph-actions: wrap */
   .ph-actions{gap:6px}
   .btn{padding:8px 14px;font-size:12px}
-  /* Formulários */
   .frow,.frow3{flex-direction:column!important}
   .field{width:100%}
-  /* Desc-foot */
   .desc-foot{flex-direction:column;gap:10px;padding:12px 16px}
-  /* Login screen */
   #login-screen{padding:24px 20px}
-  /* CD table */
   .lote-sku-row{flex-wrap:wrap;gap:6px}
-  /* Rec group stats */
   .rec-group-head>div:first-child>div:last-child{display:none}
 }
 </style>
@@ -332,8 +301,10 @@ tr:hover td{background:rgba(255,255,255,.015)}
         </div>
         <select class="fs" style="width:auto;font-size:11px;padding:5px 8px" id="dash-filter-receita" onchange="renderDashTable()"><option value="">Todas</option></select>
       </div>
-      <table><thead><tr><th>SKU</th><th class="r">Caixas/Unid</th><th class="r">Validade</th><th class="r">Tipo</th></tr></thead>
-      <tbody id="dash-tbody"></tbody></table>
+      <table>
+        <thead><tr><th>SKU</th><th class="r">Caixas/Unid</th><th class="r">Validade</th><th class="r">Tipo</th></tr></thead>
+        <tbody id="dash-tbody"></tbody>
+      </table>
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">Lotes Ativos — Validade</span></div>
@@ -348,8 +319,10 @@ tr:hover td{background:rgba(255,255,255,.015)}
       </div>
       <select class="fs" style="width:auto;font-size:11px;padding:5px 8px" id="dash-filter-cd" onchange="renderDashCDTable()"><option value="">Todas</option></select>
     </div>
-    <table><thead><tr><th>SKU</th><th class="r">Caixas/Unid</th><th class="r">Validade</th><th class="r">Tipo</th></tr></thead>
-    <tbody id="dash-cd-tbody"></tbody></table>
+    <table>
+      <thead><tr><th>SKU</th><th class="r">Caixas/Unid</th><th class="r">Validade</th><th class="r">Tipo</th></tr></thead>
+      <tbody id="dash-cd-tbody"></tbody>
+    </table>
   </div>
 </div>
 
@@ -732,17 +705,15 @@ tr:hover td{background:rgba(255,255,255,.015)}
 const VALIDADE={Lata:365,Garrafa:365,Barril:120};
 const ALERTA_DIAS={Lata:120,Garrafa:120,Barril:45};
 
-// Caixas: quantas unidades formam 1 caixa/pack
 const CAIXA={
-  'Lata 350ml':12,  // pack 12
-  'Lata 473ml':6,   // caixa 6
-  'Garrafa 500ml':6 // caixa 6
+  'Lata 350ml':12,
+  'Lata 473ml':6,
+  'Garrafa 500ml':6
 };
 
-// Volume efetivo por unidade (litros) - considerando perda de envase
 const VOL_EFETIVO={
   'Lata 350ml':0.340,
-  'Lata 473ml':0.473,   // lata não tem perda informada, usa nominal
+  'Lata 473ml':0.473,
   'Garrafa 500ml':0.490,
   'Barril 20L':20,
   'Barril 30L':30,
@@ -762,11 +733,6 @@ const SKU_TIPOS_PADRAO=[
   {id:'barril-50',nome:'Barril 50L',tipo:'Barril',vol:'50L'},
 ];
 
-// Tipos de insumos
-// caixasGarrafa: caixas para garrafas 500ml
-// caixasLata473C: caixa comum para 473 (Im Sour, Im So Sour, Im F#cking Sour, Im Sour Baby)
-// caixasLata473E: caixa especial para 473 (Paranoid, Hop Dust, Peter)
-// rotulos_<receitaId>_<skuNome>: rótulos por cerveja+sku
 const INS_CAIXAS_GARRAFA='caixa_garrafa_500';
 const INS_CAIXA_LATA473C='caixa_lata473_comum';
 const INS_CAIXA_LATA473E='caixa_lata473_especial';
@@ -780,103 +746,156 @@ const RECEITAS_CAIXA_COMUM=['I\'m Sour','I\'m So Sour','I\'m F#cking Sour','I\'m
 const RECEITAS_CAIXA_ESP=['Paranoid About Popcorn','Hop Dust','Peter the Bitter'];
 
 // ════════════════════════════════════════════
-// DATA
+// FUNÇÕES AUXILIARES
 // ════════════════════════════════════════════
 function uid(){return Math.random().toString(36).slice(2,9)}
 function today(){return new Date().toISOString().slice(0,10)}
 function diffDays(a,b){return Math.round((b-a)/86400000)}
 function fmtDate(s){if(!s)return'—';return new Date(s).toLocaleDateString('pt-BR')}
 
+function isLoteEncerrado(lote){
+  // Lotes em tanque nunca estão encerrados
+  if(lote.emTanque === true) return false;
+  if(lote.encerradoEm) return true;
+  // Verifica se todos os SKUs estão zerados
+  return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
+}
+
+function getSkuQty(loteId,skuId){
+  const d=getData();
+  const lote=d.lotes.find(l=>l.id===loteId);
+  if(!lote)return 0;
+  if(lote.emTanque)return 0;
+  const ls=lote.skus.find(s=>s.skuId===skuId);
+  const inicial=ls?ls.qty:0;
+  let q=inicial;
+  d.movs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
+    if(m.tipo==='saida')q-=m.qty;
+    else if(m.tipo==='entrada')q+=m.qty;
+    else q=m.qty;
+  });
+  return Math.max(0,q);
+}
+
+function getSkuQtyCD(loteId, skuId){
+  const d=getData();
+  if(!d.cdMovs)return 0;
+  let q=0;
+  d.cdMovs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
+    if(m.tipo==='entrada')q+=m.qty;
+    else if(m.tipo==='saida')q-=m.qty;
+  });
+  return Math.max(0,q);
+}
+
+function unidParaCaixas(nomesku,unid){
+  const c=CAIXA[nomesku];
+  if(!c)return null;
+  return Math.floor(unid/c);
+}
+
+function fmtQtyDisplay(nomesku,unid){
+  const c=CAIXA[nomesku];
+  if(!c)return{principal:unid,sub:'unid',unid};
+  const cxs=Math.floor(unid/c);
+  const resto=unid%c;
+  return{principal:cxs,sub:`cx${resto>0?' +'+resto+' un':''}`,unid};
+}
+
 // ════════════════════════════════════════════
-// GOOGLE DRIVE CONFIG
+// DADOS (Google Drive + LocalStorage)
 // ════════════════════════════════════════════
-// Substitua pelo seu Client ID do Google Cloud Console
+function emptyData(){return{receitas:[],lotes:[],movs:[],cdMovs:[],insumos:{}};}
+
+let _cache = null;
+let _dirty = false;
+let _saveTimer = null;
+let _gToken = null;
+let _driveFileId = null;
+let _userEmail = null;
+
 const GOOG_CLIENT_ID = '970026253459-c81mcdk0cna10vfsltposgdmf2t7ms3n.apps.googleusercontent.com';
 const ALLOWED_DOMAIN = 'threemonkeysbeer.com';
 const DRIVE_FILE_NAME = 'brewstack-data.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
-let _cache = null;
-let _dirty = false;
-let _saveTimer = null;
-let _gToken = null;      // access token atual
-let _driveFileId = null; // ID do arquivo no Drive
-let _userEmail = null;
+function getData(){return _cache||emptyData();}
 
-// ════════════════════════════════════════════
-// LOADING
-// ════════════════════════════════════════════
-function showLoading(msg='Carregando...'){
-  let el=document.getElementById('loading-overlay');
-  if(!el){el=document.createElement('div');el.id='loading-overlay';
-    el.style.cssText='position:fixed;inset:0;background:rgba(12,11,9,.85);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--fm);color:var(--tm);font-size:13px;letter-spacing:1px';
-    el.innerHTML='<div id="loading-spinner" style="width:32px;height:32px;border:2px solid var(--b2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite"></div><div id="loading-msg"></div>';
-    if(!document.querySelector('#spin-style')){const s=document.createElement('style');s.id='spin-style';s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(s);}
-    document.body.appendChild(el);}
-  document.getElementById('loading-msg').textContent=msg;
-  el.style.display='flex';
-}
-function hideLoading(){const el=document.getElementById('loading-overlay');if(el)el.style.display='none';}
-
-function emptyData(){return{receitas:[],lotes:[],movs:[],cdMovs:[],insumos:{}};}
-
-// ════════════════════════════════════════════
-// GOOGLE AUTH
-// ════════════════════════════════════════════
-function showLoginScreen(msg=''){
-  const ls=document.getElementById('login-screen');
-  if(ls)ls.style.display='flex';
-  if(msg){const st=document.getElementById('login-status');if(st)st.textContent=msg;}
-}
-function hideLoginScreen(){
-  const ls=document.getElementById('login-screen');
-  if(ls)ls.style.display='none';
-}
-function showLoginError(msg){
-  const el=document.getElementById('login-error');
-  if(el){el.textContent=msg;el.style.display='block';}
-}
-
-function signInGoogle(){
-  if(!window.google){showLoginError('Google Identity não carregou. Verifique a conexão.');return;}
-  const btn=document.getElementById('btn-google-login');
-  if(btn){btn.textContent='Entrando...';btn.disabled=true;}
-  google.accounts.oauth2.initTokenClient({
-    client_id: GOOG_CLIENT_ID,
-    scope: DRIVE_SCOPE+' email profile',
-    callback: async(resp)=>{
-      if(resp.error){
-        showLoginError('Erro ao autenticar: '+resp.error);
-        if(btn){btn.textContent='Entrar com Google';btn.disabled=false;}
-        return;
-      }
-      _gToken=resp.access_token;
-      // Verifica o email
-      try{
-        const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+_gToken}});
-        const udata=await ui.json();
-        _userEmail=udata.email||'';
-        if(ALLOWED_DOMAIN&&!_userEmail.endsWith('@'+ALLOWED_DOMAIN)){
-          _gToken=null;_userEmail=null;
-          showLoginError(`Acesso restrito a funcionários @${ALLOWED_DOMAIN}. Seu e-mail (${_userEmail||'desconhecido'}) não tem permissão.`);
-          if(btn){btn.innerHTML='<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg> Entrar com Google';btn.disabled=false;}
-          return;
+function save(d){
+  _cache=d;
+  localStorage.setItem('bstack3',JSON.stringify(d));
+  if(!_gToken)return;
+  _dirty=true;
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(async()=>{
+    if(!_dirty)return;
+    _dirty=false;
+    const latest=await loadRemote();
+    if(latest&&latest.receitas){
+      const localMovCount=((_cache.movs||[]).length)+(_cache.cdMovs||[]).length;
+      const remoteMovCount=((latest.movs||[]).length)+(latest.cdMovs||[]).length;
+      if(remoteMovCount>localMovCount){
+        const myMovIds=new Set((_cache.movs||[]).map(m=>m.id));
+        const myCdIds=new Set((_cache.cdMovs||[]).map(m=>m.id));
+        const novaMovs=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
+        const novaCdMovs=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
+        if(novaMovs.length||novaCdMovs.length){
+          _cache.movs=[...(_cache.movs||[]),...novaMovs];
+          _cache.cdMovs=[...(_cache.cdMovs||[]),...novaCdMovs];
         }
-        // Salva token no localStorage para renovação silenciosa
-        localStorage.setItem('bstack_email',_userEmail);
-        hideLoginScreen();
-        updateSidebarStatus();
-        await initDriveData();
-      }catch(e){
-        showLoginError('Erro ao verificar conta: '+e.message);
-        if(btn){btn.textContent='Entrar com Google';btn.disabled=false;}
       }
     }
-  }).requestAccessToken();
+    await saveRemote(_cache);
+  },800);
+}
+
+async function saveRemote(d){
+  if(!(await ensureAuth()))return;
+  if(!_driveFileId)return;
+  try{
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_driveFileId}?uploadType=media`,
+      {method:'PATCH',headers:{Authorization:'Bearer '+_gToken,'Content-Type':'application/json'},
+       body:JSON.stringify(d)});
+  }catch(e){toast('Erro de conexão. Dados não sincronizados.','e');}
+}
+
+async function loadRemote(){
+  if(!(await ensureAuth()))return null;
+  if(!_driveFileId)return null;
+  try{
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${_driveFileId}?alt=media`,
+      {headers:{Authorization:'Bearer '+_gToken}});
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){toast('Erro de conexão. Dados não sincronizados.','e');return null;}
+}
+
+async function findOrCreateDriveFile(){
+  const search=await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${DRIVE_FILE_NAME}'&fields=files(id,name)`,
+    {headers:{Authorization:'Bearer '+_gToken}}
+  );
+  const sj=await search.json();
+  if(sj.files&&sj.files.length>0){_driveFileId=sj.files[0].id;return true;}
+  const meta={name:DRIVE_FILE_NAME,parents:['appDataFolder']};
+  const form=new FormData();
+  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('file',new Blob([JSON.stringify(emptyData())],{type:'application/json'}));
+  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    {method:'POST',headers:{Authorization:'Bearer '+_gToken},body:form});
+  const cj=await cr.json();
+  _driveFileId=cj.id;
+  return false;
+}
+
+async function ensureAuth(){
+  if(_gToken)return true;
+  const ok=await silentRefreshToken();
+  if(!ok){showLoginScreen('Sessão expirada. Faça login novamente.');return false;}
+  return true;
 }
 
 async function silentRefreshToken(){
-  // Tenta renovar o token silenciosamente (sem popup)
   return new Promise((resolve)=>{
     if(!window.google){resolve(false);return;}
     const hint=localStorage.getItem('bstack_email')||'';
@@ -893,97 +912,48 @@ async function silentRefreshToken(){
   });
 }
 
-// ════════════════════════════════════════════
-// GOOGLE DRIVE: ler e salvar
-// ════════════════════════════════════════════
-async function findOrCreateDriveFile(){
-  // Busca arquivo existente no appDataFolder
-  const search=await fetch(
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${DRIVE_FILE_NAME}'&fields=files(id,name)`,
-    {headers:{Authorization:'Bearer '+_gToken}}
-  );
-  const sj=await search.json();
-  if(sj.files&&sj.files.length>0){_driveFileId=sj.files[0].id;return true;}
-  // Cria arquivo novo
-  const meta={name:DRIVE_FILE_NAME,parents:['appDataFolder']};
-  const form=new FormData();
-  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
-  form.append('file',new Blob([JSON.stringify(emptyData())],{type:'application/json'}));
-  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-    {method:'POST',headers:{Authorization:'Bearer '+_gToken},body:form});
-  const cj=await cr.json();
-  _driveFileId=cj.id;
-  return false; // false = arquivo novo (sem dados)
+function showLoginScreen(msg=''){
+  const ls=document.getElementById('login-screen');
+  if(ls)ls.style.display='flex';
+  if(msg){const st=document.getElementById('login-status');if(st)st.textContent=msg;}
 }
+function hideLoginScreen(){const ls=document.getElementById('login-screen');if(ls)ls.style.display='none';}
+function showLoginError(msg){const el=document.getElementById('login-error');if(el){el.textContent=msg;el.style.display='block';}}
 
-async function ensureAuth(){
-  if(_gToken)return true;
-  const ok=await silentRefreshToken();
-  if(!ok){showLoginScreen('Sessão expirada. Faça login novamente.');return false;}
-  return true;
-}
-
-async function loadRemote(){
-  if(!(await ensureAuth()))return null;
-  if(!_driveFileId)return null;
-  try{
-    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${_driveFileId}?alt=media`,
-      {headers:{Authorization:'Bearer '+_gToken}});
-    if(!r.ok)return null;
-    return await r.json();
-  }catch(e){toast('Erro de conexão. Dados não sincronizados.','e');return null;}
-}
-
-async function saveRemote(d){
-  if(!(await ensureAuth()))return;
-  if(!_driveFileId)return;
-  try{
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_driveFileId}?uploadType=media`,
-      {method:'PATCH',headers:{Authorization:'Bearer '+_gToken,'Content-Type':'application/json'},
-       body:JSON.stringify(d)});
-  }catch(e){toast('Erro de conexão. Dados não sincronizados.','e');}
-}
-
-// ════════════════════════════════════════════
-// DADOS
-// ════════════════════════════════════════════
-function getData(){return _cache||emptyData();}
-
-function save(d){
-  _cache=d;
-  localStorage.setItem('bstack3',JSON.stringify(d));
-  if(!_gToken)return;
-  _dirty=true;
-  clearTimeout(_saveTimer);
-  _saveTimer=setTimeout(async()=>{
-    if(!_dirty)return;
-    _dirty=false;
-    // Merge: carrega versão mais recente antes de salvar
-    const latest=await loadRemote();
-    if(latest&&latest.receitas){
-      // Usa a versão local (mais recente para este usuário) mas mantém movs mais completos
-      const localMovCount=((_cache.movs||[]).length)+(_cache.cdMovs||[]).length;
-      const remoteMovCount=((latest.movs||[]).length)+(latest.cdMovs||[]).length;
-      if(remoteMovCount>localMovCount){
-        // Outro usuário adicionou movs — faz merge simples de movs
-        const myMovIds=new Set((_cache.movs||[]).map(m=>m.id));
-        const myCdIds=new Set((_cache.cdMovs||[]).map(m=>m.id));
-        const novaMovs=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
-        const novaCdMovs=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
-        if(novaMovs.length||novaCdMovs.length){
-          _cache.movs=[...(_cache.movs||[]),...novaMovs];
-          _cache.cdMovs=[...(_cache.cdMovs||[]),...novaCdMovs];
+function signInGoogle(){
+  if(!window.google){showLoginError('Google Identity não carregou. Verifique a conexão.');return;}
+  const btn=document.getElementById('btn-google-login');
+  if(btn){btn.textContent='Entrando...';btn.disabled=true;}
+  google.accounts.oauth2.initTokenClient({
+    client_id: GOOG_CLIENT_ID,
+    scope: DRIVE_SCOPE+' email profile',
+    callback: async(resp)=>{
+      if(resp.error){
+        showLoginError('Erro ao autenticar: '+resp.error);
+        if(btn){btn.textContent='Entrar com Google';btn.disabled=false;}
+        return;
+      }
+      _gToken=resp.access_token;
+      try{
+        const ui=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+_gToken}});
+        const udata=await ui.json();
+        _userEmail=udata.email||'';
+        if(ALLOWED_DOMAIN&&!_userEmail.endsWith('@'+ALLOWED_DOMAIN)){
+          _gToken=null;_userEmail=null;
+          showLoginError(`Acesso restrito a funcionários @${ALLOWED_DOMAIN}. Seu e-mail (${_userEmail||'desconhecido'}) não tem permissão.`);
+          if(btn){btn.innerHTML='<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg> Entrar com Google';btn.disabled=false;}
+          return;
         }
+        localStorage.setItem('bstack_email',_userEmail);
+        hideLoginScreen();
+        updateSidebarStatus();
+        await initDriveData();
+      }catch(e){
+        showLoginError('Erro ao verificar conta: '+e.message);
+        if(btn){btn.textContent='Entrar com Google';btn.disabled=false;}
       }
     }
-    await saveRemote(_cache);
-  },800);
-}
-
-async function flushSave(){
-  if(!_dirty||!_gToken)return;
-  clearTimeout(_saveTimer);_dirty=false;
-  await saveRemote(_cache);
+  }).requestAccessToken();
 }
 
 async function initDriveData(){
@@ -999,7 +969,6 @@ async function initDriveData(){
         hideLoading();renderDashboard();setInterval(pollRemote,120000);return;
       }
     }
-    // Arquivo novo ou vazio: tenta migrar do localStorage
     const local=localStorage.getItem('bstack3');
     if(local){
       try{
@@ -1013,7 +982,6 @@ async function initDriveData(){
         }
       }catch(e){}
     }
-    // Tudo novo: seed
     _cache=emptyData();seedIfEmpty();
     await saveRemote(_cache);
     hideLoading();renderDashboard();setInterval(pollRemote,120000);
@@ -1023,37 +991,6 @@ async function initDriveData(){
   }
 }
 
-async function initData(){
-  showLoading('Iniciando...');
-  // Tenta renovar token silenciosamente se já logou antes
-  const savedEmail=localStorage.getItem('bstack_email');
-  if(savedEmail&&window.google&&GOOG_CLIENT_ID!=='COLE_SEU_CLIENT_ID_AQUI.apps.googleusercontent.com'){
-    const ok=await silentRefreshToken();
-    if(ok){
-      _userEmail=savedEmail;
-      updateSidebarStatus();
-      await initDriveData();
-      return;
-    }
-  }
-  // Não tem sessão: cai no localStorage enquanto mostra tela de login
-  try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
-  catch(e){_cache=emptyData();}
-  seedIfEmpty();hideLoading();
-  if(GOOG_CLIENT_ID==='COLE_SEU_CLIENT_ID_AQUI.apps.googleusercontent.com'){
-    // Client ID não configurado ainda — avisa
-    const b=document.createElement('div');b.id='config-banner';
-    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:800;background:var(--warn);color:#0c0b09;font-family:var(--fm);font-size:11px;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px';
-    b.innerHTML='<span>⚠️ Client ID do Google não configurado. Siga o guia para ativar a nuvem.</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px">×</button>';
-    document.body.prepend(b);
-    renderDashboard();
-  } else {
-    showLoginScreen('Entre com sua conta @'+ALLOWED_DOMAIN+' para sincronizar os dados.');
-    renderDashboard();
-  }
-}
-
-// Poll a cada 2 minutos
 let _lastPollHash='';
 async function pollRemote(){
   if(!_gToken||_dirty)return;
@@ -1084,133 +1021,18 @@ function updateSidebarStatus(){
   }
 }
 
+function showLoading(msg='Carregando...'){
+  let el=document.getElementById('loading-overlay');
+  if(!el){el=document.createElement('div');el.id='loading-overlay';
+    el.style.cssText='position:fixed;inset:0;background:rgba(12,11,9,.85);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--fm);color:var(--tm);font-size:13px;letter-spacing:1px';
+    el.innerHTML='<div id="loading-spinner" style="width:32px;height:32px;border:2px solid var(--b2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite"></div><div id="loading-msg"></div>';
+    if(!document.querySelector('#spin-style')){const s=document.createElement('style');s.id='spin-style';s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(s);}
+    document.body.appendChild(el);}
+  document.getElementById('loading-msg').textContent=msg;
+  el.style.display='flex';
+}
+function hideLoading(){const el=document.getElementById('loading-overlay');if(el)el.style.display='none';}
 
-// ── SKU qty ──
-function getSkuQty(loteId,skuId){
-  const d=getData();
-  const lote=d.lotes.find(l=>l.id===loteId);
-  if(!lote)return 0;
-  if(lote.emTanque)return 0; // lotes em tanque não entram no estoque
-  const ls=lote.skus.find(s=>s.skuId===skuId);
-  const inicial=ls?ls.qty:0;
-  let q=inicial;
-  d.movs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
-    if(m.tipo==='saida')q-=m.qty;
-    else if(m.tipo==='entrada')q+=m.qty;
-    else q=m.qty;
-  });
-  return Math.max(0,q);
-}
-
-// Converte unidades para exibição em caixas
-function unidParaCaixas(nomesku,unid){
-  const c=CAIXA[nomesku];
-  if(!c)return null; // barril, sem caixa
-  return Math.floor(unid/c);
-}
-function fmtQtyDisplay(nomesku,unid){
-  const c=CAIXA[nomesku];
-  if(!c)return{principal:unid,sub:'unid'};
-  const cxs=Math.floor(unid/c);
-  const resto=unid%c;
-  return{principal:cxs,sub:`cx${resto>0?' +'+resto+' un':''}`,unid};
-}
-
-function isLoteEncerrado(lote){
-  if(lote.encerradoEm)return true;
-  return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
-}
-function getLoteEncerradoEm(lote){
-  if(lote.encerradoEm)return new Date(lote.encerradoEm);
-  const d=getData();
-  const movs=d.movs.filter(m=>m.loteId===lote.id).sort((a,b)=>b.ts-a.ts);
-  return movs.length>0?new Date(movs[0].ts):null;
-}
-
-function getValidadeInfo(lote,receita){
-  if(!lote.dtEnv||!receita)return null;
-  const dtEnv=new Date(lote.dtEnv);
-  const now=new Date();
-  let menorDias=Infinity,menorSku=null;
-  lote.skus.forEach(ls=>{
-    if(getSkuQty(lote.id,ls.skuId)===0)return;
-    const sku=receita.skus.find(x=>x.id===ls.skuId);
-    if(!sku)return;
-    const val=VALIDADE[sku.tipo]||365;
-    const expDt=new Date(dtEnv.getTime()+val*86400000);
-    const dr=diffDays(now,expDt);
-    if(dr<menorDias){menorDias=dr;menorSku=sku;}
-  });
-  return menorSku?{diasRestantes:menorDias,sku:menorSku}:null;
-}
-function getAlertaLevel(dr,tipo){
-  const al=ALERTA_DIAS[tipo]||120;
-  if(dr<=0)return'enc';
-  if(dr<=al/2)return'crit';
-  if(dr<=al)return'warn';
-  return'ok';
-}
-
-// Calcula vol envasado total a partir das qtds de SKUs (usando vol efetivo com perda)
-function calcVolEnvasado(skuQtds, receita){
-  let total=0;
-  skuQtds.forEach(({skuId,qty})=>{
-    const sku=receita.skus.find(s=>s.id===skuId);
-    if(!sku||!qty)return;
-    const ve=VOL_EFETIVO[sku.nome];
-    if(ve!==undefined)total+=ve*qty;
-    else{
-      // fallback: parse vol string
-      const n=parseFloat(sku.vol)||0;
-      const isL=sku.vol&&sku.vol.toLowerCase().includes('l')&&!sku.vol.toLowerCase().includes('ml');
-      total+=isL?n*qty:n*qty/1000;
-    }
-  });
-  return Math.round(total*10)/10;
-}
-
-function getBarrilPct(lote,receita){
-  if(!receita)return 0;
-  let total=0,barL=0;
-  lote.skus.forEach(ls=>{
-    const sku=receita.skus.find(x=>x.id===ls.skuId);
-    if(!sku)return;
-    const movs=getData().movs.filter(m=>m.loteId===lote.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
-    const envasado=movs.reduce((a,m)=>a+m.qty,0);
-    const ve=VOL_EFETIVO[sku.nome]||parseFloat(sku.vol)||0;
-    const litros=ve<1?ve*envasado:ve*envasado;
-    // correct: barril vol already in L
-    total+=litros;
-    if(sku.tipo==='Barril')barL+=litros;
-  });
-  return total?Math.round(barL/total*100):0;
-}
-
-// Insumos helpers
-function getInsQty(key){
-  const d=getData();
-  return d.insumos[key]||0;
-}
-function addInsQty(key,delta){
-  const d=getData();
-  if(!d.insumos)d.insumos={};
-  d.insumos[key]=(d.insumos[key]||0)+delta;
-  if(d.insumos[key]<0)d.insumos[key]=0;
-  save(d);
-}
-function insKeyRotulo(receitaId,skuNome){return'rotulo_'+receitaId+'_'+skuNome.replace(/\s/g,'_')}
-function insKeyCaixa(receitaNome,skuNome){
-  if(skuNome==='Garrafa 500ml')return INS_CAIXAS_GARRAFA;
-  if(skuNome.includes('473')){
-    if(RECEITAS_CAIXA_COMUM.includes(receitaNome))return INS_CAIXA_LATA473C;
-    if(RECEITAS_CAIXA_ESP.includes(receitaNome))return INS_CAIXA_LATA473E;
-  }
-  return null;
-}
-
-// ════════════════════════════════════════════
-// SEED
-// ════════════════════════════════════════════
 function seedIfEmpty(){
   const d=getData();
   if(d.receitas&&d.receitas.length>0)return;
@@ -1233,8 +1055,16 @@ function seedIfEmpty(){
   save(d);
 }
 
+function toast(msg,type=''){
+  const w=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className='toast '+(type==='s'?'s':type==='e'?'e':'');
+  el.textContent=msg;w.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),350);},3500);
+}
+
 // ════════════════════════════════════════════
-// NAV
+// NAVEGAÇÃO
 // ════════════════════════════════════════════
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
@@ -1263,12 +1093,12 @@ function goTo(p){
 }
 
 // ════════════════════════════════════════════
-// DASHBOARD
+// DASHBOARD (resumido)
 // ════════════════════════════════════════════
 function renderDashboard(){
   const d=getData();
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const ativos=d.lotes.filter(l=>!isLoteEncerrado(l));
+  const ativos=d.lotes.filter(l=>!isLoteEncerrado(l) && !l.emTanque);
   const hoje=new Date().toDateString();
   const movsHoje=d.movs.filter(m=>new Date(m.ts).toDateString()===hoje).length;
   let venc=0;
@@ -1283,10 +1113,8 @@ function renderDashboard(){
   const sel=document.getElementById('dash-filter-receita');
   const cur=sel.value;
   sel.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===cur?' selected':''}>${r.nome}</option>`).join('');
-  migrarEmTanque();
   renderDashTable();renderDashValidade();renderDashCDTable();
-  // Update tanque badge
-  const nTanque=(d.lotes||[]).filter(l=>l.emTanque&&!isLoteEncerrado(l)).length;
+  const nTanque=(d.lotes||[]).filter(l=>l.emTanque===true && !isLoteEncerrado(l)).length;
   const bt=document.getElementById('badge-tanque');if(bt){bt.textContent=nTanque;bt.style.display=nTanque>0?'':'none';}
   const selCD=document.getElementById('dash-filter-cd');
   if(selCD){const curCD=selCD.value;selCD.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===curCD?' selected':''}>${r.nome}</option>`).join('');}
@@ -1296,7 +1124,7 @@ function renderDashTable(){
   const d=getData();
   const fr=document.getElementById('dash-filter-receita').value;
   const rows=[];
-  d.lotes.filter(l=>!isLoteEncerrado(l)).forEach(l=>{
+  d.lotes.filter(l=>!isLoteEncerrado(l) && !l.emTanque).forEach(l=>{
     if(fr&&l.receitaId!==fr)return;
     const rec=d.receitas.find(r=>r.id===l.receitaId);
     if(!rec)return;
@@ -1305,8 +1133,7 @@ function renderDashTable(){
       if(qty===0)return;
       const sku=rec.skus.find(s=>s.id===ls.skuId);
       if(!sku)return;
-      // Validade deste SKU
-      let valdHtml='—'; let valdStr='—'; let diasStr='—';
+      let valdHtml='—';
       if(l.dtEnv){
         const val=VALIDADE[sku.tipo]||365;
         const expDt=new Date(new Date(l.dtEnv).getTime()+val*86400000);
@@ -1315,21 +1142,17 @@ function renderDashTable(){
         const lv=dias<=0?'crit':dias<=al/2?'crit':dias<=al?'warn':'ok';
         const cor=lv==='crit'?'var(--red)':lv==='warn'?'var(--warn)':'var(--tm)';
         valdHtml=`<span style="font-family:var(--fm);font-size:11px;color:${cor};font-weight:500">${dias>0?dias+'d':'VENCIDO'}</span><div style="font-family:var(--fm);font-size:9px;color:var(--td)">${expDt.toLocaleDateString('pt-BR')}</div>`;
-        valdStr=expDt.toLocaleDateString('pt-BR');
-        diasStr=dias>0?dias+'d restantes':'VENCIDO';
       }
-      rows.push({recNome:rec.nome,skuNome:sku.nome,tipo:sku.tipo,qty,loteCodigo:l.codigo,loteId:l.id,skuId:ls.skuId,valdHtml,valdStr,diasStr});
+      rows.push({recNome:rec.nome,skuNome:sku.nome,tipo:sku.tipo,qty,loteCodigo:l.codigo,loteId:l.id,skuId:ls.skuId,valdHtml});
     });
   });
   const tbody=document.getElementById('dash-tbody');
   if(!rows.length){tbody.innerHTML=`<tr><td colspan="4" class="empty">Nenhum SKU em estoque</td></tr>`;return;}
-
-  // Ordem dos grupos: Barril PET → Barril inox → Garrafa → Lata
   function grupoOrdem(r){
     if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L') return 0;
     if(r.tipo==='Barril') return 1;
     if(r.tipo==='Garrafa') return 2;
-    return 3; // Lata
+    return 3;
   }
   function grupoLabel(r){
     if(r.skuNome==='Barril PET 30L'||r.skuNome==='Barril PET 20L') return 'Barris PET';
@@ -1342,7 +1165,6 @@ function renderDashTable(){
     if(go!==0)return go;
     return a.recNome.localeCompare(b.recNome);
   });
-
   let html=''; let lastGrupo=null;
   rows.forEach(r=>{
     const g=grupoLabel(r);
@@ -1362,13 +1184,11 @@ function renderDashTable(){
   tbody.innerHTML=html;
 }
 
-
 function renderDashCDTable(){
   const d=getData();
   if(!d.cdMovs)return;
   const fr=document.getElementById('dash-filter-cd')?.value||'';
   const rows=[];
-  // Coleta todos os lotes que têm estoque no CD
   d.lotes.forEach(l=>{
     if(fr&&l.receitaId!==fr)return;
     const rec=d.receitas.find(r=>r.id===l.receitaId);
@@ -1378,7 +1198,7 @@ function renderDashCDTable(){
       if(qty===0)return;
       const sku=rec.skus.find(s=>s.id===ls.skuId);
       if(!sku)return;
-      let valdHtml='—';let valdStr='—';let diasStr='—';let diasNum=9999;
+      let valdHtml='—';
       if(l.dtEnv){
         const val=VALIDADE[sku.tipo]||365;
         const expDt=new Date(new Date(l.dtEnv).getTime()+val*86400000);
@@ -1387,9 +1207,8 @@ function renderDashCDTable(){
         const lv=dias<=0?'crit':dias<=al/2?'crit':dias<=al?'warn':'ok';
         const cor=lv==='crit'?'var(--red)':lv==='warn'?'var(--warn)':'var(--tm)';
         valdHtml=`<span style="font-family:var(--fm);font-size:11px;color:${cor};font-weight:500">${dias>0?dias+'d':'VENCIDO'}</span><div style="font-family:var(--fm);font-size:9px;color:var(--td)">${expDt.toLocaleDateString('pt-BR')}</div>`;
-        diasStr=dias>0?dias+'d restantes':'VENCIDO';diasNum=dias;
       }
-      rows.push({recNome:rec.nome,skuNome:sku.nome,tipo:sku.tipo,qty,loteCodigo:l.codigo,valdHtml,diasNum});
+      rows.push({recNome:rec.nome,skuNome:sku.nome,tipo:sku.tipo,qty,loteCodigo:l.codigo,valdHtml});
     });
   });
   const tbody=document.getElementById('dash-cd-tbody');
@@ -1420,6 +1239,86 @@ function renderDashCDTable(){
   tbody.innerHTML=html;
 }
 
+function renderDashValidade(){
+  const d=getData();
+  const items=[];
+  d.lotes.filter(l=>!isLoteEncerrado(l) && !l.emTanque).forEach(l=>{
+    const rec=d.receitas.find(r=>r.id===l.receitaId);
+    const vi=getValidadeInfo(l,rec);
+    if(!vi)return;
+    items.push({l,rec,vi,lv:getAlertaLevel(vi.diasRestantes,vi.sku.tipo)});
+  });
+  items.sort((a,b)=>a.vi.diasRestantes-b.vi.diasRestantes);
+  const el=document.getElementById('dash-validade');
+  if(!items.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum alerta</div>`;return;}
+  el.innerHTML=items.map(({l,rec,vi,lv})=>`
+    <div class="exp-bar ${lv}" style="margin:6px 12px;border-radius:3px">
+      <span>${lv==='crit'?'🚨':lv==='warn'?'⚠️':'✓'}</span>
+      <div style="flex:1"><strong>${rec?rec.nome:''}</strong> · ${l.codigo}
+        <div style="opacity:.7;font-size:9px;margin-top:1px">${vi.sku.nome} · env. ${fmtDate(l.dtEnv)}</div></div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:500">${vi.diasRestantes>0?vi.diasRestantes+'d':'VENCIDO'}</div>
+        <div style="opacity:.7;font-size:9px">restantes</div>
+      </div>
+    </div>`).join('');
+}
+
+function getValidadeInfo(lote,receita){
+  if(!lote.dtEnv||!receita)return null;
+  const dtEnv=new Date(lote.dtEnv);
+  let menorDias=Infinity,menorSku=null;
+  lote.skus.forEach(ls=>{
+    if(getSkuQty(lote.id,ls.skuId)===0)return;
+    const sku=receita.skus.find(x=>x.id===ls.skuId);
+    if(!sku)return;
+    const val=VALIDADE[sku.tipo]||365;
+    const expDt=new Date(dtEnv.getTime()+val*86400000);
+    const dr=diffDays(new Date(),expDt);
+    if(dr<menorDias){menorDias=dr;menorSku=sku;}
+  });
+  return menorSku?{diasRestantes:menorDias,sku:menorSku}:null;
+}
+
+function getAlertaLevel(dr,tipo){
+  const al=ALERTA_DIAS[tipo]||120;
+  if(dr<=0)return'enc';
+  if(dr<=al/2)return'crit';
+  if(dr<=al)return'warn';
+  return'ok';
+}
+
+function getBarrilPct(lote,rec){
+  if(!rec)return 0;
+  let total=0,barL=0;
+  lote.skus.forEach(ls=>{
+    const sku=rec.skus.find(x=>x.id===ls.skuId);
+    if(!sku)return;
+    const movs=getData().movs.filter(m=>m.loteId===lote.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
+    const envasado=movs.reduce((a,m)=>a+m.qty,0);
+    const ve=VOL_EFETIVO[sku.nome]||parseFloat(sku.vol)||0;
+    const litros=ve<1?ve*envasado:ve*envasado;
+    total+=litros;
+    if(sku.tipo==='Barril')barL+=litros;
+  });
+  return total?Math.round(barL/total*100):0;
+}
+
+function calcVolEnvasado(skuQtds, receita){
+  let total=0;
+  skuQtds.forEach(({skuId,qty})=>{
+    const sku=receita.skus.find(s=>s.id===skuId);
+    if(!sku||!qty)return;
+    const ve=VOL_EFETIVO[sku.nome];
+    if(ve!==undefined)total+=ve*qty;
+    else{
+      const n=parseFloat(sku.vol)||0;
+      const isL=sku.vol&&sku.vol.toLowerCase().includes('l')&&!sku.vol.toLowerCase().includes('ml');
+      total+=isL?n*qty:n*qty/1000;
+    }
+  });
+  return Math.round(total*10)/10;
+}
+
 function exportDashPDF(origem){
   origem=origem||'fabrica';
   const d=getData();
@@ -1443,7 +1342,7 @@ function exportDashPDF(origem){
 
   d.lotes.forEach(l=>{
     if(fr&&l.receitaId!==fr)return;
-    if(isFab&&isLoteEncerrado(l))return;
+    if(isFab && (isLoteEncerrado(l) || l.emTanque))return;
     const rec=d.receitas.find(r=>r.id===l.receitaId);
     if(!rec)return;
     l.skus.forEach(ls=>{
@@ -1451,7 +1350,6 @@ function exportDashPDF(origem){
       if(qty===0)return;
       const sku=rec.skus.find(s=>s.id===ls.skuId);
       if(!sku)return;
-      // Para CD: só mostra se teve movimentação no CD
       if(!isFab&&!(d.cdMovs||[]).some(m=>m.loteId===l.id&&m.skuId===ls.skuId))return;
       const q=fmtQtyDisplay(sku.nome,qty);
       const {valdStr,diasStr,diasNum}=buildValidade(l,sku);
@@ -1541,30 +1439,6 @@ function exportDashPDF(origem){
   setTimeout(()=>URL.revokeObjectURL(url),15000);
 }
 
-function renderDashValidade(){
-  const d=getData();
-  const items=[];
-  d.lotes.filter(l=>!isLoteEncerrado(l)).forEach(l=>{
-    const rec=d.receitas.find(r=>r.id===l.receitaId);
-    const vi=getValidadeInfo(l,rec);
-    if(!vi)return;
-    items.push({l,rec,vi,lv:getAlertaLevel(vi.diasRestantes,vi.sku.tipo)});
-  });
-  items.sort((a,b)=>a.vi.diasRestantes-b.vi.diasRestantes);
-  const el=document.getElementById('dash-validade');
-  if(!items.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum alerta</div>`;return;}
-  el.innerHTML=items.map(({l,rec,vi,lv})=>`
-    <div class="exp-bar ${lv}" style="margin:6px 12px;border-radius:3px">
-      <span>${lv==='crit'?'🚨':lv==='warn'?'⚠️':'✓'}</span>
-      <div style="flex:1"><strong>${rec?rec.nome:''}</strong> · ${l.codigo}
-        <div style="opacity:.7;font-size:9px;margin-top:1px">${vi.sku.nome} · env. ${fmtDate(l.dtEnv)}</div></div>
-      <div style="text-align:right">
-        <div style="font-size:14px;font-weight:500">${vi.diasRestantes>0?vi.diasRestantes+'d':'VENCIDO'}</div>
-        <div style="opacity:.7;font-size:9px">restantes</div>
-      </div>
-    </div>`).join('');
-}
-
 // ════════════════════════════════════════════
 // DESCIDA
 // ════════════════════════════════════════════
@@ -1588,7 +1462,6 @@ function renderDescida(){
       const sku=rec?rec.skus.find(s=>s.id===ls.skuId):null;
       const nome=sku?sku.nome:ls.skuId;
       const q=fmtQtyDisplay(nome,qty);
-      const unidLabel=CAIXA[nome]?`caixas (${qty} unid)`:'unidades';
       return`<div class="desc-row">
         <div class="desc-sku-name">${nome}</div>
         <div class="desc-sku-stock">${q.principal} ${CAIXA[nome]?'cx':''} em estoque</div>
@@ -1621,7 +1494,6 @@ function updateDescPreview(){
 }
 function clearDescida(){document.querySelectorAll('.desc-input').forEach(i=>{i.value='';i.classList.remove('has-val');});updateDescPreview();}
 
-// Movimentações pendentes aguardando destino
 let _pendingMovs=[];
 
 function confirmarDescida(){
@@ -1640,7 +1512,6 @@ function confirmarDescida(){
   });
   if(!movs.length){toast('Nenhuma quantidade informada.','e');return;}
   _pendingMovs=movs;
-  // Preview no modal
   const linhas=movs.map(m=>{
     const lote=d.lotes.find(l=>l.id===m.loteId);
     const rec=lote?d.receitas.find(r=>r.id===lote.receitaId):null;
@@ -1666,14 +1537,12 @@ function closeDestino(){document.getElementById('ov-destino').classList.remove('
 
 function confirmarComDestino(){
   const destino=document.querySelector('[name="destino"]:checked')?.value||'cd';
-  const outroObs=document.getElementById('dest-outro-obs').value.trim();
   const d=getData();
   const movs=_pendingMovs.map(m=>({
     ...m,
     destino,
     obs: destino==='cd'?'Descida da fábrica':'Descida da fábrica',usuario:_userEmail||'—'
   }));
-  // Desconta insumos (caixas)
   movs.forEach(m=>{
     const lote=d.lotes.find(l=>l.id===m.loteId);
     const rec=lote?d.receitas.find(r=>r.id===lote.receitaId):null;
@@ -1685,7 +1554,6 @@ function confirmarComDestino(){
     }
   });
   d.movs.unshift(...movs);
-  // Se CD Rio: cria movs de entrada no CD
   if(destino==='cd'){
     const cdMovs=movs.map(m=>({
       id:uid(),loteId:m.loteId,skuId:m.skuId,tipo:'entrada',local:'cd',
@@ -1694,7 +1562,6 @@ function confirmarComDestino(){
     if(!d.cdMovs)d.cdMovs=[];
     d.cdMovs.unshift(...cdMovs);
   }
-  // Verifica encerramento de lotes
   movs.forEach(m=>{
     const lote=d.lotes.find(l=>l.id===m.loteId);
     if(lote&&!lote.encerradoEm&&isLoteEncerrado(lote))lote.encerradoEm=today();
@@ -1703,6 +1570,14 @@ function confirmarComDestino(){
   toast(`✅ ${movs.length} saída${movs.length>1?'s':''} registrada${movs.length>1?'s':''}!`,'s');
 }
 
+function insKeyCaixa(receitaNome,skuNome){
+  if(skuNome==='Garrafa 500ml')return INS_CAIXAS_GARRAFA;
+  if(skuNome.includes('473')){
+    if(RECEITAS_CAIXA_COMUM.includes(receitaNome))return INS_CAIXA_LATA473C;
+    if(RECEITAS_CAIXA_ESP.includes(receitaNome))return INS_CAIXA_LATA473E;
+  }
+  return null;
+}
 
 // ════════════════════════════════════════════
 // HISTÓRICO
@@ -1719,7 +1594,6 @@ function renderHistorico(){
   const lm={},rm={},sm={};
   d.lotes.forEach(l=>lm[l.id]=l);
   d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
-  // Agrupa por mês
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const grupos={};
   movs.forEach(m=>{
@@ -1741,7 +1615,6 @@ function renderHistorico(){
       const sign=m.tipo==='saida'?'−':'+';
       let qtyStr=`${sign}${m.qty}`;
       if(m.tipo==='saida'&&sku&&CAIXA[sku.nome]){const cx=Math.floor(m.qty/CAIXA[sku.nome]);qtyStr=`${sign}${cx} cx`;}
-      // Label de destino para saídas
       let destinoTag='';
       if(m.tipo==='saida'){
         if(m.destino==='cd'||m.obs==='Transferência → CD Rio')
@@ -1801,7 +1674,7 @@ function exportCSV(){
 }
 
 // ════════════════════════════════════════════
-// LOTES — agrupados por receita, alfabético
+// LOTES
 // ════════════════════════════════════════════
 let lf='todos';
 function setLF(f,el){lf=f;document.querySelectorAll('#lote-ftabs .ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLotes();}
@@ -1809,62 +1682,48 @@ function setLF(f,el){lf=f;document.querySelectorAll('#lote-ftabs .ftab').forEach
 function renderLotes(){
   const d=getData();
   let lotes=[...d.lotes];
-  if(lf==='ativo')lotes=lotes.filter(l=>!isLoteEncerrado(l));
-  if(lf==='enc')lotes=lotes.filter(l=>isLoteEncerrado(l));
+  if(lf==='ativo')lotes=lotes.filter(l=>!isLoteEncerrado(l) && !l.emTanque);
+  if(lf==='enc')lotes=lotes.filter(l=>isLoteEncerrado(l) && !l.emTanque);
   document.getElementById('lotes-sub').textContent=`${lotes.length} lote${lotes.length!==1?'s':''}`;
-
-  // Ordenação
   const sortVal=(document.getElementById('lote-sort')||{}).value||'alfa';
-
-  // Agrupar por receita
-  const recMap={};
-  d.receitas.forEach(r=>recMap[r.id]=r);
+  const recMap={};d.receitas.forEach(r=>recMap[r.id]=r);
   const grupos={};
   lotes.forEach(l=>{
     const rid=l.receitaId;
     if(!grupos[rid])grupos[rid]=[];
     grupos[rid].push(l);
   });
-
-  // Ordena lotes dentro de cada grupo por data de envase
   Object.values(grupos).forEach(arr=>{
     arr.sort((a,b)=>{
       if(sortVal==='antigo')return (a.dtEnv||'').localeCompare(b.dtEnv||'');
-      return (b.dtEnv||'').localeCompare(a.dtEnv||''); // mais novo primeiro
+      return (b.dtEnv||'').localeCompare(a.dtEnv||'');
     });
   });
-
-  // Ordena grupos (receitas)
   const recIds=Object.keys(grupos).sort((a,b)=>{
     const na=recMap[a]?recMap[a].nome:'';
     const nb=recMap[b]?recMap[b].nome:'';
-    if(sortVal==='lote-az')return na.localeCompare(nb);   // A-Z por nome cerveja
-    if(sortVal==='lote-za')return nb.localeCompare(na);   // Z-A por nome cerveja
+    if(sortVal==='lote-az')return na.localeCompare(nb);
+    if(sortVal==='lote-za')return nb.localeCompare(na);
     if(sortVal==='antigo'){
-      // grupo mais antigo = lote com dtEnv mais antiga
       const da=grupos[a].map(l=>l.dtEnv||'').filter(Boolean).sort()[0]||'';
       const db=grupos[b].map(l=>l.dtEnv||'').filter(Boolean).sort()[0]||'';
       return da.localeCompare(db);
     }
     if(sortVal==='novo'){
-      // grupo mais recente = lote com dtEnv mais recente
       const da=grupos[a].map(l=>l.dtEnv||'').filter(Boolean).sort().reverse()[0]||'';
       const db=grupos[b].map(l=>l.dtEnv||'').filter(Boolean).sort().reverse()[0]||'';
       return db.localeCompare(da);
     }
-    return na.localeCompare(nb); // padrão: alfabético
+    return na.localeCompare(nb);
   });
-
   const el=document.getElementById('lotes-container');
   if(!recIds.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🍺</div>Nenhum lote encontrado. Clique em "Novo Lote".</div>`;return;}
   el.innerHTML=recIds.map(rid=>{
     const rec=recMap[rid];
     const recNome=rec?rec.nome:'Receita removida';
     const arr=grupos[rid];
-    const ativos=arr.filter(l=>!isLoteEncerrado(l)).length;
+    const ativos=arr.filter(l=>!isLoteEncerrado(l) && !l.emTanque).length;
     const bodyId='rg-'+rid;
-
-    // Médias para o cabeçalho
     const rends=arr.map(l=>l.volEnv&&l.volTeo?Math.round(l.volEnv/l.volTeo*100):null).filter(x=>x!==null);
     const rendMedio=rends.length?Math.round(rends.reduce((a,b)=>a+b,0)/rends.length):null;
     const bps=arr.map(l=>getBarrilPct(l,rec)).filter(x=>x>0);
@@ -1872,7 +1731,6 @@ function renderLotes(){
     const enc=arr.filter(l=>isLoteEncerrado(l));
     const durs=enc.map(l=>{const ed=getLoteEncerradoEm(l);if(!ed||!l.dtEnv)return null;const v=diffDays(new Date(l.dtEnv),ed);return v>=0?v:null;}).filter(x=>x!==null);
     const durMedia=durs.length?Math.round(durs.reduce((a,b)=>a+b,0)/durs.length):null;
-
     const statsHtml=`
       <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;gap:1px">
@@ -1888,9 +1746,7 @@ function renderLotes(){
           <span style="font-family:var(--fd);font-size:16px;letter-spacing:1px;color:var(--text)">${durMedia!==null?durMedia+'d':'—'}</span>
         </div>
       </div>`;
-
     const lotesHtml=arr.map(l=>renderLoteCard(l,d,rec)).join('');
-    // PADRÃO: grupos fechados (hidden)
     return`<div class="rec-group">
       <div class="rec-group-head" onclick="toggleGroup('${bodyId}')">
         <div style="flex:1;min-width:0">
@@ -1908,13 +1764,11 @@ function renderLotes(){
   }).join('');
 }
 
-function toggleGroup(id){
-  const el=document.getElementById(id);
-  const arr=document.getElementById('arr-'+id);
-  if(el){
-    const hidden=el.classList.toggle('hidden');
-    if(arr)arr.textContent=hidden?'▸':'▾';
-  }
+function getLoteEncerradoEm(lote){
+  if(lote.encerradoEm)return new Date(lote.encerradoEm);
+  const d=getData();
+  const movs=d.movs.filter(m=>m.loteId===lote.id).sort((a,b)=>b.ts-a.ts);
+  return movs.length>0?new Date(movs[0].ts):null;
 }
 
 function renderLoteCard(l,d,rec){
@@ -1925,7 +1779,7 @@ function renderLoteCard(l,d,rec){
   let duracaoStr='Em andamento';
   if(enc){const ed=getLoteEncerradoEm(l);if(ed&&l.dtEnv){const dur=diffDays(new Date(l.dtEnv),ed);duracaoStr=dur>=0?dur+'d':'—';}}
   let validadeHtml='';
-  if(!enc){
+  if(!enc && !l.emTanque){
     const vi=getValidadeInfo(l,rec);
     if(vi){const lv=getAlertaLevel(vi.diasRestantes,vi.sku.tipo);const txt=vi.diasRestantes<=0?'VENCIDO':`${vi.diasRestantes}d restantes (${vi.sku.nome})`;
       validadeHtml=`<div class="exp-bar ${lv}" style="margin-bottom:8px">${lv==='crit'?'🚨':lv==='warn'?'⚠️':'✓'} ${txt}</div>`;}
@@ -1945,7 +1799,6 @@ function renderLoteCard(l,d,rec){
       ${l.emTanque?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
     </div>`;
   }).join('');
-  // perdas
   let perdasHtml='';
   if(l.perdas&&Object.keys(l.perdas).length){
     const pp=Object.entries(l.perdas).filter(([,v])=>v>0).map(([k,v])=>`<span class="mono" style="font-size:10px">${k.replace(/_/g,' ')}: <strong>${v}</strong></span>`).join(' · ');
@@ -1978,90 +1831,22 @@ function renderLoteCard(l,d,rec){
   </div>`;
 }
 
-// ════════════════════════════════════════════
-// MODAL LOTE
-// ════════════════════════════════════════════
-let editLoteId=null;
-let _loteEmTanque=false; // estado atual do toggle Em Tanque
-
-function openLoteModal(id){
-  _openLoteModal(id,null);
-}
-function openLoteModalForReceita(recId){
-  _openLoteModal(null,recId);
-}
-function openLoteModalTanque(){
-  _openLoteModal(null,null,true); // true = forçar Em Tanque
-}
-function _openLoteModal(id,preRecId,forcarTanque){
-  editLoteId=id||null;
-  const d=getData();
-  const sel=document.getElementById('lote-receita');
-  sel.innerHTML='<option value="">Selecione...</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}">${r.nome}</option>`).join('');
-  if(id){
-    const l=d.lotes.find(x=>x.id===id);
-    if(!l)return;
-    document.getElementById('lote-modal-title').textContent='EDITAR LOTE';
-    sel.value=l.receitaId;
-    document.getElementById('lote-id').value=l.codigo;
-    document.getElementById('lote-vol-teo').value=l.volTeo;
-    document.getElementById('lote-dt-prod').value=l.dtProd||'';
-    document.getElementById('lote-dt-env').value=l.dtEnv||'';
-    document.getElementById('lote-obs').value=l.obs||'';
-    // Status: em tanque ou envasado
-    // Se emTanque não está definido no lote, infere pelo histórico:
-    // lote sem movimentações de entrada = provavelmente em tanque
-    let isTanque;
-    if(l.emTanque===undefined||l.emTanque===null){
-      const temEntradas=d.movs.some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
-      isTanque=!temEntradas&&!isLoteEncerrado(l);
-    } else {
-      isTanque=!!l.emTanque;
-    }
-    document.getElementById('lote-status-tanque').checked=isTanque;
-    document.getElementById('lote-status-envasado').checked=!isTanque;
-    _loteEmTanque=isTanque;
-    // Reconstrói as qtds: se em tanque usa qtdEstimada, senão usa movimentações
-    const skusComQtd=l.skus.map(ls=>{
-      if(isTanque){
-        return{skuId:ls.skuId,qty:ls.qtdEstimada||0};
-      }
-      const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
-      const qtdReal=entradas.reduce((acc,m)=>acc+m.qty,0);
-      return{skuId:ls.skuId,qty:qtdReal};
-    });
-    onLoteReceitaChange(skusComQtd,l.perdas||{});
-    onLoteStatusChange(); // chama depois do render para show/hide corretos
-    calcDiasEnvase();
-  } else {
-    document.getElementById('lote-modal-title').textContent='NOVO LOTE';
-    document.getElementById('lote-id').value='L'+new Date().getFullYear()+'-'+(String(Date.now()).slice(-4));
-    document.getElementById('lote-vol-teo').value='';
-    document.getElementById('lote-dt-prod').value=today();
-    document.getElementById('lote-dt-env').value=today();
-    document.getElementById('lote-obs').value='';
-    document.getElementById('lote-vol-env-display').textContent='—';
-    document.getElementById('lote-rend-display').textContent='—';
-    document.getElementById('lote-dias-info').style.display='none';
-    document.getElementById('lote-status-envasado').checked=!forcarTanque;
-    document.getElementById('lote-status-tanque').checked=!!forcarTanque;
-    _loteEmTanque=!!forcarTanque;
-    onLoteStatusChange();
-    if(preRecId){sel.value=preRecId;onLoteReceitaChange(null,{});}
-    else{document.getElementById('lote-skus-fields').innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--td)">Selecione a receita</div>';
-      document.getElementById('lote-perdas-fields').innerHTML='';}
+function toggleGroup(id){
+  const el=document.getElementById(id);
+  const arr=document.getElementById('arr-'+id);
+  if(el){
+    const hidden=el.classList.toggle('hidden');
+    if(arr)arr.textContent=hidden?'▸':'▾';
   }
-  document.getElementById('ov-lote').classList.add('open');
 }
-function onLoteStatusChange(){
-  const isTanque=document.getElementById('lote-status-tanque').checked;
-  _loteEmTanque=isTanque; // atualiza variável global
-  const skusLabel=document.getElementById('lote-skus-label');
-  const perdasLabel=document.getElementById('lote-perdas-label');
-  const perdasDiv=document.getElementById('lote-perdas-fields');
-  if(skusLabel)skusLabel.textContent=isTanque?'Estimativa de envase (opcional)':'SKUs envasados neste lote';
-  if(perdasLabel)perdasLabel.style.display=isTanque?'none':'';
-  if(perdasDiv)perdasDiv.style.display=isTanque?'none':'';
+
+function deleteLote(id){
+  const d=getData();
+  const l=d.lotes.find(x=>x.id===id);
+  if(!l||!confirm(`Excluir lote "${l.codigo}"?`))return;
+  d.lotes=d.lotes.filter(x=>x.id!==id);
+  d.movs=d.movs.filter(m=>m.loteId!==id);
+  save(d);renderLotes();renderDashboard();toast('Lote excluído.');
 }
 
 // ════════════════════════════════════════════
@@ -2069,9 +1854,7 @@ function onLoteStatusChange(){
 // ════════════════════════════════════════════
 function renderTanque(){
   const d=getData();
-  // Filtra lotes com emTanque explicitamente true
-  const lotesTanque=d.lotes.filter(l=>l.emTanque===true&&!isLoteEncerrado(l));
-  // Update badge
+  const lotesTanque=d.lotes.filter(l=>l.emTanque===true && !isLoteEncerrado(l));
   const badge=document.getElementById('badge-tanque');
   if(badge){badge.textContent=lotesTanque.length;badge.style.display=lotesTanque.length>0?'':'none';}
   document.getElementById('tanque-sub').textContent=`${lotesTanque.length} lote${lotesTanque.length!==1?'s':''} em produção`;
@@ -2080,7 +1863,6 @@ function renderTanque(){
     el.innerHTML=`<div class="empty"><div class="empty-icon">🧪</div>Nenhum lote em tanque.<br>Ao criar um lote, marque "Em Tanque" para ele aparecer aqui.</div>`;
     return;
   }
-  // Group by receita
   const recMap={};d.receitas.forEach(r=>recMap[r.id]=r);
   const grupos={};
   lotesTanque.forEach(l=>{if(!grupos[l.receitaId])grupos[l.receitaId]=[];grupos[l.receitaId].push(l);});
@@ -2108,7 +1890,6 @@ function renderTanque(){
 
 function renderTanqueCard(l,d,rec){
   const diasTanque=l.dtProd?diffDays(new Date(l.dtProd),new Date()):0;
-  // Estimativas de SKU (se preenchidas)
   const skusHtml=l.skus.filter(ls=>ls.qtdEstimada>0).map(ls=>{
     const sku=rec?rec.skus.find(s=>s.id===ls.skuId):null;
     const nome=sku?sku.nome:ls.skuId;
@@ -2142,6 +1923,83 @@ function renderTanqueCard(l,d,rec){
   </div>`;
 }
 
+// ════════════════════════════════════════════
+// MODAL LOTE
+// ════════════════════════════════════════════
+let editLoteId=null;
+let _loteEmTanque=false;
+
+function openLoteModal(id){
+  _openLoteModal(id,null);
+}
+function openLoteModalForReceita(recId){
+  _openLoteModal(null,recId);
+}
+function openLoteModalTanque(){
+  _openLoteModal(null,null,true);
+}
+function _openLoteModal(id,preRecId,forcarTanque){
+  editLoteId=id||null;
+  const d=getData();
+  const sel=document.getElementById('lote-receita');
+  sel.innerHTML='<option value="">Selecione...</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}">${r.nome}</option>`).join('');
+  if(id){
+    const l=d.lotes.find(x=>x.id===id);
+    if(!l)return;
+    document.getElementById('lote-modal-title').textContent='EDITAR LOTE';
+    sel.value=l.receitaId;
+    document.getElementById('lote-id').value=l.codigo;
+    document.getElementById('lote-vol-teo').value=l.volTeo;
+    document.getElementById('lote-dt-prod').value=l.dtProd||'';
+    document.getElementById('lote-dt-env').value=l.dtEnv||'';
+    document.getElementById('lote-obs').value=l.obs||'';
+    let isTanque = l.emTanque === true;
+    document.getElementById('lote-status-tanque').checked=isTanque;
+    document.getElementById('lote-status-envasado').checked=!isTanque;
+    _loteEmTanque=isTanque;
+    const skusComQtd=l.skus.map(ls=>{
+      if(isTanque){
+        return{skuId:ls.skuId,qty:ls.qtdEstimada||0};
+      }
+      const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
+      const qtdReal=entradas.reduce((acc,m)=>acc+m.qty,0);
+      return{skuId:ls.skuId,qty:qtdReal};
+    });
+    onLoteReceitaChange(skusComQtd,l.perdas||{});
+    onLoteStatusChange();
+    calcDiasEnvase();
+  } else {
+    document.getElementById('lote-modal-title').textContent='NOVO LOTE';
+    document.getElementById('lote-id').value='L'+new Date().getFullYear()+'-'+(String(Date.now()).slice(-4));
+    document.getElementById('lote-vol-teo').value='';
+    document.getElementById('lote-dt-prod').value=today();
+    document.getElementById('lote-dt-env').value=today();
+    document.getElementById('lote-obs').value='';
+    document.getElementById('lote-vol-env-display').textContent='—';
+    document.getElementById('lote-rend-display').textContent='—';
+    document.getElementById('lote-dias-info').style.display='none';
+    document.getElementById('lote-status-envasado').checked=!forcarTanque;
+    document.getElementById('lote-status-tanque').checked=!!forcarTanque;
+    _loteEmTanque=!!forcarTanque;
+    onLoteStatusChange();
+    if(preRecId){sel.value=preRecId;onLoteReceitaChange(null,{});}
+    else{document.getElementById('lote-skus-fields').innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--td)">Selecione a receita</div>';
+      document.getElementById('lote-perdas-fields').innerHTML='';}
+  }
+  document.getElementById('ov-lote').classList.add('open');
+}
+
+function onLoteStatusChange(){
+  const isTanque=document.getElementById('lote-status-tanque').checked;
+  _loteEmTanque=isTanque;
+  const skusLabel=document.getElementById('lote-skus-label');
+  const perdasLabel=document.getElementById('lote-perdas-label');
+  const perdasDiv=document.getElementById('lote-perdas-fields');
+  if(skusLabel)skusLabel.textContent=isTanque?'Estimativa de envase (opcional)':'SKUs envasados neste lote';
+  if(perdasLabel)perdasLabel.style.display=isTanque?'none':'';
+  if(perdasDiv)perdasDiv.style.display=isTanque?'none':'';
+}
+
 function closeLote(){document.getElementById('ov-lote').classList.remove('open');}
 
 function onLoteReceitaChange(existingSkus,existingPerdas){
@@ -2151,7 +2009,6 @@ function onLoteReceitaChange(existingSkus,existingPerdas){
   const sf=document.getElementById('lote-skus-fields');
   const pf=document.getElementById('lote-perdas-fields');
   if(!rec){sf.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--td)">Selecione a receita</div>';pf.innerHTML='';return;}
-  // SKUs
   sf.innerHTML=rec.skus.map(s=>{
     const ex=existingSkus?existingSkus.find(x=>x.skuId===s.id):null;
     const hint=CAIXA[s.nome]?`(1 cx = ${CAIXA[s.nome]} unid)`:'';
@@ -2163,14 +2020,12 @@ function onLoteReceitaChange(existingSkus,existingPerdas){
       <span style="font-family:var(--fm);font-size:10px;color:var(--tm);width:32px">unid</span>
     </div>`;
   }).join('');
-  // Perdas
   const ep=existingPerdas||{};
   const rotuloSkus=rec.skus.filter(s=>s.tipo==='Lata'||s.tipo==='Garrafa');
   const temGarrafa=rec.skus.some(s=>s.tipo==='Garrafa');
   const temLata350=rec.skus.some(s=>s.nome==='Lata 350ml');
   const temLata473=rec.skus.some(s=>s.nome==='Lata 473ml');
   let perdasFields=`<div style="display:flex;flex-direction:column;gap:0">`;
-  // Rótulos por SKU de lata/garrafa
   rotuloSkus.forEach(s=>{
     const k='rotulo_'+s.nome.replace(/\s/g,'_');
     perdasFields+=`<div class="perda-row">
@@ -2178,23 +2033,18 @@ function onLoteReceitaChange(existingSkus,existingPerdas){
       <input class="perda-input" type="number" min="0" id="perda-${k}" placeholder="0" value="${ep[k]||''}">
     </div>`;
   });
-  // Lata 350ml
   if(temLata350){
     perdasFields+=`<div class="perda-row">
       <div class="perda-label">Latas 350ml<small>unidades descartadas</small></div>
       <input class="perda-input" type="number" min="0" id="perda-lata_350" placeholder="0" value="${ep['lata_350']||''}">
     </div>`;
-
   }
-  // Lata 473ml
   if(temLata473){
     perdasFields+=`<div class="perda-row">
       <div class="perda-label">Latas 473ml<small>unidades descartadas</small></div>
       <input class="perda-input" type="number" min="0" id="perda-lata_473" placeholder="0" value="${ep['lata_473']||''}">
     </div>`;
-
   }
-  // Garrafa
   if(temGarrafa){
     perdasFields+=`<div class="perda-row">
       <div class="perda-label">Garrafas<small>unidades descartadas</small></div>
@@ -2247,16 +2097,14 @@ function salvarLote(){
   if(!codigo){toast('Informe o código do lote.','e');return;}
   const rec=d.receitas.find(r=>r.id===recId);
   if(!rec)return;
-  const isTanque=_loteEmTanque; // usa variável global (mais confiável que .checked)
+  const isTanque=_loteEmTanque;
   const qtdsDigitadas=rec.skus.map(s=>({skuId:s.id,nome:s.nome,qty:parseInt(document.getElementById('lsku-'+s.id)?.value)||0}));
   const skus=qtdsDigitadas.map(s=>({skuId:s.skuId,qty:0,qtdEstimada:isTanque?s.qty:0}));
-  // Calcula vol envasado (só se envasado)
   let volEnv=0;
   if(!isTanque){
     qtdsDigitadas.forEach(({nome,qty})=>{const ve=VOL_EFETIVO[nome];if(ve!==undefined)volEnv+=ve*qty;});
     volEnv=Math.round(volEnv*10)/10;
   }
-  // Coleta perdas (só se envasado)
   const perdas={};
   if(!isTanque){
     document.querySelectorAll('[id^="perda-"]').forEach(el=>{
@@ -2280,7 +2128,6 @@ function salvarLote(){
       d.lotes[idx]={...d.lotes[idx],...loteData};
       const loteId=editLoteId;
       if(!isTanque){
-        // Envasado (seja novo envasado ou conversão de tanque→envasado)
         const movsRestantes=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - ')));
         const novasEntradas=[];
         qtdsDigitadas.forEach(ls=>{
@@ -2289,14 +2136,12 @@ function salvarLote(){
           if(qtdEntrada>0)novasEntradas.push({id:uid(),loteId,skuId:ls.skuId,tipo:'entrada',qty:qtdEntrada,obs:'Entrada - '+codigo,ts:Date.now(),usuario:_userEmail||'—'});
         });
         d.movs=[...novasEntradas,...movsRestantes];
-        // Se veio de tanque, desconta insumos agora
         if(eraBTanque){
           if(!d.insumos)d.insumos={};
           _descontarInsumos(d,rec,qtdsDigitadas,perdas,recId,codigo);
         }
         if(d.lotes[idx].encerradoEm&&!isLoteEncerrado(d.lotes[idx])){d.lotes[idx].encerradoEm=null;}
       } else {
-        // Continua em tanque: remove entradas se existirem
         d.movs=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - ')));
       }
     }
@@ -2305,7 +2150,6 @@ function salvarLote(){
     loteData.id=uid();loteData.encerradoEm=null;
     d.lotes.push(loteData);
     if(!isTanque){
-      // movimentações de entrada
       qtdsDigitadas.forEach(ls=>{
         if(ls.qty>0)d.movs.unshift({id:uid(),loteId:loteData.id,skuId:ls.skuId,tipo:'entrada',qty:ls.qty,obs:'Entrada - '+codigo,ts:Date.now(),usuario:_userEmail||'—'});
       });
@@ -2339,23 +2183,15 @@ function _descontarInsumos(d,rec,qtdsDigitadas,perdas,recId,codigo){
   if(perdas['tampinha_garrafa']){d.insumos[INS_TAMPINHA_GARRAFA]=(d.insumos[INS_TAMPINHA_GARRAFA]||0)-perdas['tampinha_garrafa'];if(d.insumos[INS_TAMPINHA_GARRAFA]<0)d.insumos[INS_TAMPINHA_GARRAFA]=0;}
   if(perdas['lata_350']){d.insumos[INS_LATA_350]=(d.insumos[INS_LATA_350]||0)-perdas['lata_350'];if(d.insumos[INS_LATA_350]<0)d.insumos[INS_LATA_350]=0;}
   if(perdas['lata_473']){d.insumos[INS_LATA_473]=(d.insumos[INS_LATA_473]||0)-perdas['lata_473'];if(d.insumos[INS_LATA_473]<0)d.insumos[INS_LATA_473]=0;}
-  if(perdas['lata_350']){d.insumos[INS_LATA_350]=(d.insumos[INS_LATA_350]||0)-perdas['lata_350'];if(d.insumos[INS_LATA_350]<0)d.insumos[INS_LATA_350]=0;}
-  if(perdas['tampa_lata_350']){d.insumos['unid_tampa_lata_350']=(d.insumos['unid_tampa_lata_350']||0)-perdas['tampa_lata_350'];if(d.insumos['unid_tampa_lata_350']<0)d.insumos['unid_tampa_lata_350']=0;}
 }
 
-function deleteLote(id){
-  const d=getData();
-  const l=d.lotes.find(x=>x.id===id);
-  if(!l||!confirm(`Excluir lote "${l.codigo}"?`))return;
-  d.lotes=d.lotes.filter(x=>x.id!==id);
-  d.movs=d.movs.filter(m=>m.loteId!==id);
-  save(d);renderLotes();renderDashboard();toast('Lote excluído.');
-}
+function insKeyRotulo(receitaId,skuNome){return'rotulo_'+receitaId+'_'+skuNome.replace(/\s/g,'_')}
 
 // ════════════════════════════════════════════
 // MODAL MOV
 // ════════════════════════════════════════════
 let movLoteId=null,movSkuId=null,movSkuNome='';
+
 function openMovModal(loteId,skuId){
   const d=getData();
   movLoteId=loteId;movSkuId=skuId;
@@ -2424,7 +2260,7 @@ function salvarMov(){
   if(tipo==='saida'&&isCx)unids=inputVal*CAIXA[movSkuNome];
   let movQty=unids;
   if(tipo==='ajuste'){const atual=getSkuQty(movLoteId,movSkuId);movQty=Math.abs(unids-atual);}
-  d.movs.unshift({id:uid(),loteId:movLoteId,skuId:movSkuId,tipo,qty:movQty,obs,ts:Date.now()});
+  d.movs.unshift({id:uid(),loteId:movLoteId,skuId:movSkuId,tipo,qty:movQty,obs,ts:Date.now(),usuario:_userEmail||'—'});
   if(!lote.encerradoEm&&isLoteEncerrado(lote))lote.encerradoEm=today();
   save(d);closeMov();renderLotes();renderDashboard();
   toast(`${tipo==='saida'?'Saída':tipo==='entrada'?'Entrada':'Ajuste'} registrado!`,'s');
@@ -2436,8 +2272,7 @@ function salvarMov(){
 function renderAnalytics(){
   const d=getData();
   const receitas=[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome));
-  // Global: média de perdas
-  let totalPerdaRotulos=0,totalPerdaGarrafas=0,totalPerdaTampinhas=0,totalPerdaLata350=0,totalPerdaTampa350=0,totalPerdaLata473=0,totalPerdaTampa473=0,nLotes=0;
+  let totalPerdaRotulos=0,totalPerdaGarrafas=0,totalPerdaTampinhas=0,totalPerdaLata350=0,totalPerdaLata473=0,nLotes=0;
   d.lotes.forEach(l=>{
     if(!l.perdas)return;nLotes++;
     Object.entries(l.perdas).forEach(([k,v])=>{
@@ -2445,9 +2280,7 @@ function renderAnalytics(){
       if(k==='garrafa')totalPerdaGarrafas+=v||0;
       if(k==='tampinha_garrafa')totalPerdaTampinhas+=v||0;
       if(k==='lata_350')totalPerdaLata350+=v||0;
-      if(k==='tampa_lata_350')totalPerdaTampa350+=v||0;
       if(k==='lata_473')totalPerdaLata473+=v||0;
-      if(k==='tampa_lata_473')totalPerdaTampa473+=v||0;
     });
   });
   document.getElementById('analytics-global-stats').innerHTML=`
@@ -2467,16 +2300,13 @@ function renderAnalytics(){
     const durMedia=durs.length?Math.round(durs.reduce((a,b)=>a+b)/durs.length):null;
     const bps=lotes.map(l=>getBarrilPct(l,rec)).filter(x=>x>0);
     const bpMedia=bps.length?Math.round(bps.reduce((a,b)=>a+b)/bps.length):null;
-    // perdas médias por receita
-    let pRot=0,pGar=0,pTamp=0,pL350=0,pT350=0,pL473=0,pT473=0,nPL=0;
+    let pRot=0,pGar=0,pTamp=0,pL350=0,pL473=0,nPL=0;
     lotes.forEach(l=>{if(!l.perdas)return;nPL++;Object.entries(l.perdas).forEach(([k,v])=>{
       if(k.startsWith('rotulo_'))pRot+=v;
       if(k==='garrafa')pGar+=v;
       if(k==='tampinha_garrafa')pTamp+=v;
       if(k==='lata_350')pL350+=v;
-      if(k==='tampa_lata_350')pT350+=v;
       if(k==='lata_473')pL473+=v;
-      if(k==='tampa_lata_473')pT473+=v;
     });});
     const lotesRows=lotes.slice().sort((a,b)=>(b.dtEnv||'').localeCompare(a.dtEnv||'')).map(l=>{
       const r=l.volEnv&&l.volTeo?Math.round(l.volEnv/l.volTeo*100):null;
@@ -2524,7 +2354,6 @@ function renderInsumos(){
   const el=document.getElementById('insumos-container');
   let html='';
 
-  // Caixas
   html+=`<div class="ins-section"><div class="ins-section-title">Caixas e Embalagens</div><div class="ins-grid">`;
   const caixasItens=[
     {key:INS_CAIXAS_GARRAFA, nome:'Caixa para Garrafas 500ml', sub:''},
@@ -2547,7 +2376,6 @@ function renderInsumos(){
   });
   html+='</div></div>';
 
-  // Materiais de envase (garrafas, latas, tampas)
   html+=`<div class="ins-section"><div class="ins-section-title">Vasilhames e Fechamentos</div><div class="ins-grid">`;
   const vasilhameItens=[
     {key:INS_GARRAFA_500, nome:'Garrafas 500ml', sub:'unidades', limCrit:500, limWarn:1500},
@@ -2573,7 +2401,6 @@ function renderInsumos(){
   });
   html+='</div></div>';
 
-  // Rótulos por receita (ordem alfa)
   html+=`<div class="ins-section"><div class="ins-section-title">Rótulos por Cerveja</div>`;
   const receitas=[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome));
   receitas.forEach(rec=>{
@@ -2613,7 +2440,11 @@ function ajusteInsumo(key,nome){
   d.insumos[key]=v;save(d);renderInsumos();toast('Insumo atualizado!','s');
 }
 
-// Modal entrada insumos
+function getInsQty(key){
+  const d=getData();
+  return d.insumos[key]||0;
+}
+
 function openInsEntradaModal(){
   const d=getData();
   if(!d.insumos)d.insumos={};
@@ -2722,71 +2553,6 @@ function openReceitaModal(id){
   renderCustomSKUs();
   document.getElementById('ov-receita').classList.add('open');
 }
-// ════════════════════════════════════════════
-// EDITAR / CANCELAR MOVIMENTAÇÃO
-// ════════════════════════════════════════════
-let _editMovId=null;
-
-function openEditMov(movId){
-  const d=getData();
-  const m=d.movs.find(x=>x.id===movId);
-  if(!m)return;
-  _editMovId=movId;
-  const lm={},rm={},sm={};
-  d.lotes.forEach(l=>lm[l.id]=l);
-  d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
-  const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
-  const isCx=m.tipo==='saida'&&sku&&CAIXA[sku.nome];
-  const qtyDisplay=isCx?Math.floor(m.qty/CAIXA[sku.nome]):m.qty;
-  document.getElementById('edit-mov-info').innerHTML=
-    `<strong>${rec?rec.nome:''}</strong> · ${sku?sku.nome:''}<br>
-    Lote: ${l?l.codigo:'—'} · Tipo: ${m.tipo==='saida'?'Saída':'Entrada'}<br>
-    Data: ${new Date(m.ts).toLocaleString('pt-BR')}`;
-  document.getElementById('edit-mov-qty-lbl').textContent=isCx?'Quantidade (caixas)':'Quantidade (unidades)';
-  document.getElementById('edit-mov-qty-hint').textContent=isCx?`1 cx = ${CAIXA[sku.nome]} unid`:'';
-  document.getElementById('edit-mov-qty').value=qtyDisplay;
-  document.getElementById('edit-mov-obs').value=m.obs||'';
-  document.getElementById('ov-edit-mov').classList.add('open');
-  setTimeout(()=>document.getElementById('edit-mov-qty').focus(),100);
-}
-function closeEditMov(){document.getElementById('ov-edit-mov').classList.remove('open');}
-
-function salvarEditMov(){
-  const d=getData();
-  const m=d.movs.find(x=>x.id===_editMovId);
-  if(!m){closeEditMov();return;}
-  const inputVal=parseInt(document.getElementById('edit-mov-qty').value);
-  if(isNaN(inputVal)||inputVal<0){toast('Quantidade inválida.','e');return;}
-  const lm={},rm={},sm={};
-  d.lotes.forEach(l=>lm[l.id]=l);
-  d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
-  const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
-  const isCx=m.tipo==='saida'&&sku&&CAIXA[sku.nome];
-  m.qty=isCx?inputVal*CAIXA[sku.nome]:inputVal;
-  m.obs=document.getElementById('edit-mov-obs').value.trim();
-  // Re-verifica encerramento do lote
-  if(l&&!l.encerradoEm&&isLoteEncerrado(l)){l.encerradoEm=today();}
-  else if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
-  save(d);closeEditMov();renderHistorico();renderDashboard();
-  toast('Movimentação atualizada!','s');
-}
-
-function cancelarMov(){
-  if(!confirm('Cancelar esta movimentação? Ela será removida do histórico e o estoque será ajustado.'))return;
-  const d=getData();
-  const idx=d.movs.findIndex(x=>x.id===_editMovId);
-  if(idx>-1){
-    const m=d.movs[idx];
-    const lm={};d.lotes.forEach(l=>lm[l.id]=l);
-    const l=lm[m.loteId];
-    d.movs.splice(idx,1);
-    // Re-verifica encerramento
-    if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
-  }
-  save(d);closeEditMov();renderHistorico();renderDashboard();
-  toast('Movimentação cancelada.','s');
-}
-
 function closeReceita(){document.getElementById('ov-receita').classList.remove('open');}
 function renderCustomSKUs(){
   let html=customSKUs.map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
@@ -2834,58 +2600,88 @@ function deleteReceita(id){
 }
 
 // ════════════════════════════════════════════
-// TOAST
+// EDITAR / CANCELAR MOVIMENTAÇÃO
 // ════════════════════════════════════════════
-function toast(msg,type=''){
-  const w=document.getElementById('toasts');
-  const el=document.createElement('div');
-  el.className='toast '+(type==='s'?'s':type==='e'?'e':'');
-  el.textContent=msg;w.appendChild(el);
-  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),350);},3500);
+let _editMovId=null;
+
+function openEditMov(movId){
+  const d=getData();
+  const m=d.movs.find(x=>x.id===movId);
+  if(!m)return;
+  _editMovId=movId;
+  const lm={},rm={},sm={};
+  d.lotes.forEach(l=>lm[l.id]=l);
+  d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
+  const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
+  const isCx=m.tipo==='saida'&&sku&&CAIXA[sku.nome];
+  const qtyDisplay=isCx?Math.floor(m.qty/CAIXA[sku.nome]):m.qty;
+  document.getElementById('edit-mov-info').innerHTML=
+    `<strong>${rec?rec.nome:''}</strong> · ${sku?sku.nome:''}<br>
+    Lote: ${l?l.codigo:'—'} · Tipo: ${m.tipo==='saida'?'Saída':'Entrada'}<br>
+    Data: ${new Date(m.ts).toLocaleString('pt-BR')}`;
+  document.getElementById('edit-mov-qty-lbl').textContent=isCx?'Quantidade (caixas)':'Quantidade (unidades)';
+  document.getElementById('edit-mov-qty-hint').textContent=isCx?`1 cx = ${CAIXA[sku.nome]} unid`:'';
+  document.getElementById('edit-mov-qty').value=qtyDisplay;
+  document.getElementById('edit-mov-obs').value=m.obs||'';
+  document.getElementById('ov-edit-mov').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-mov-qty').focus(),100);
+}
+function closeEditMov(){document.getElementById('ov-edit-mov').classList.remove('open');}
+
+function salvarEditMov(){
+  const d=getData();
+  const m=d.movs.find(x=>x.id===_editMovId);
+  if(!m){closeEditMov();return;}
+  const inputVal=parseInt(document.getElementById('edit-mov-qty').value);
+  if(isNaN(inputVal)||inputVal<0){toast('Quantidade inválida.','e');return;}
+  const lm={},rm={},sm={};
+  d.lotes.forEach(l=>lm[l.id]=l);
+  d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
+  const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
+  const isCx=m.tipo==='saida'&&sku&&CAIXA[sku.nome];
+  m.qty=isCx?inputVal*CAIXA[sku.nome]:inputVal;
+  m.obs=document.getElementById('edit-mov-obs').value.trim();
+  if(l&&!l.encerradoEm&&isLoteEncerrado(l)){l.encerradoEm=today();}
+  else if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
+  save(d);closeEditMov();renderHistorico();renderDashboard();
+  toast('Movimentação atualizada!','s');
+}
+
+function cancelarMov(){
+  if(!confirm('Cancelar esta movimentação? Ela será removida do histórico e o estoque será ajustado.'))return;
+  const d=getData();
+  const idx=d.movs.findIndex(x=>x.id===_editMovId);
+  if(idx>-1){
+    const m=d.movs[idx];
+    const lm={};d.lotes.forEach(l=>lm[l.id]=l);
+    const l=lm[m.loteId];
+    d.movs.splice(idx,1);
+    if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
+  }
+  save(d);closeEditMov();renderHistorico();renderDashboard();
+  toast('Movimentação cancelada.','s');
 }
 
 // ════════════════════════════════════════════
 // ESTOQUE CD RIO
 // ════════════════════════════════════════════
-
-function getSkuQtyCD(loteId, skuId){
-  const d=getData();
-  if(!d.cdMovs)return 0;
-  let q=0;
-  d.cdMovs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
-    if(m.tipo==='entrada')q+=m.qty;
-    else if(m.tipo==='saida')q-=m.qty;
-    else q=m.qty;
-  });
-  return Math.max(0,q);
-}
+let cdf='todos';
+function setCDF(f,el){cdf=f;document.querySelectorAll('#cd-ftabs .ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderCD();}
 
 function isLoteCDZerado(loteId, lote){
   return lote.skus.every(ls=>getSkuQtyCD(loteId,ls.skuId)===0);
 }
 
-let cdf='todos';
-function setCDF(f,el){cdf=f;document.querySelectorAll('#cd-ftabs .ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderCD();}
-
 function renderCD(){
   const d=getData();
   if(!d.cdMovs)d.cdMovs=[];
-  // Só lotes que já tiveram alguma entrada no CD
   const lotesComCD=d.lotes.filter(l=>d.cdMovs.some(m=>m.loteId===l.id&&m.tipo==='entrada'));
-
-  // Filtro
   let lotes=[...lotesComCD];
   if(cdf==='ativo')lotes=lotes.filter(l=>!isLoteCDZerado(l.id,l));
   if(cdf==='zerado')lotes=lotes.filter(l=>isLoteCDZerado(l.id,l));
-
   document.getElementById('cd-sub').textContent=`${lotes.length} lote${lotes.length!==1?'s':''} no CD`;
-
-  // Ordenação
   const sortVal=(document.getElementById('cd-sort')||{}).value||'alfa';
-
-  // Agrupa por receita
-  const recMap={};
-  d.receitas.forEach(r=>recMap[r.id]=r);
+  const recMap={};d.receitas.forEach(r=>recMap[r.id]=r);
   const grupos={};
   lotes.forEach(l=>{
     const rid=l.receitaId;
@@ -2901,13 +2697,11 @@ function renderCD(){
     });
   });
   const recIds=Object.keys(grupos).sort((a,b)=>(recMap[a]?.nome||'').localeCompare(recMap[b]?.nome||''));
-
   const el=document.getElementById('cd-container');
   if(!recIds.length){
     el.innerHTML=`<div class="empty"><div class="empty-icon">🏢</div>Nenhuma transferência para o CD ainda.<br>Registre uma descida com destino "CD Rio" para começar.</div>`;
     return;
   }
-
   el.innerHTML=recIds.map(rid=>{
     const rec=recMap[rid];
     const recNome=rec?rec.nome:'Receita removida';
@@ -2932,7 +2726,6 @@ function renderCD(){
 function renderCDLoteCard(l,d,rec){
   const skusHtml=l.skus.map(ls=>{
     const qtyCD=getSkuQtyCD(l.id,ls.skuId);
-    // Só mostra SKUs que já tiveram movimentação no CD
     const temMov=d.cdMovs&&d.cdMovs.some(m=>m.loteId===l.id&&m.skuId===ls.skuId);
     if(!temMov)return'';
     const sku=rec?rec.skus.find(s=>s.id===ls.skuId):null;
@@ -2940,7 +2733,6 @@ function renderCDLoteCard(l,d,rec){
     const tipo=sku?sku.tipo:'Lata';
     const q=fmtQtyDisplay(nome,qtyCD);
     const subLabel=CAIXA[nome]?`${q.unid} unid`:'';
-    // Histórico desse SKU no CD
     const movsCd=(d.cdMovs||[]).filter(m=>m.loteId===l.id&&m.skuId===ls.skuId);
     const totalEntrada=movsCd.filter(m=>m.tipo==='entrada').reduce((a,m)=>a+m.qty,0);
     const totalSaida=movsCd.filter(m=>m.tipo==='saida').reduce((a,m)=>a+m.qty,0);
@@ -2969,7 +2761,6 @@ function renderCDLoteCard(l,d,rec){
   </div>`;
 }
 
-// ── Modal movimentação CD ──
 let _cdMovLoteId=null,_cdMovSkuId=null,_cdMovSkuNome='';
 
 function openCDMovModal(loteId,skuId){
@@ -2992,9 +2783,9 @@ function openCDMovModal(loteId,skuId){
       <input type="radio" name="cdmt" value="saida" checked onchange="onCDMovTipo()" style="display:none">
       <span style="font-size:18px">🛒</span><span style="font-size:12px;font-weight:500;color:var(--red)">Venda</span>
     </label>
-    <label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px;border:1px solid var(--b2);border-radius:var(--r);cursor:pointer" id="cdopt-e">
+    <label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px;border:1px solid var(--amber);background:var(--amber-dim);border-radius:var(--r);cursor:pointer" id="cdopt-e">
       <input type="radio" name="cdmt" value="entrada" onchange="onCDMovTipo()" style="display:none">
-      <span style="font-size:18px">📥</span><span style="font-size:12px;font-weight:500">Entrada manual</span>
+      <span style="font-size:18px">📥</span><span style="font-size:12px;font-weight:500;color:var(--amber)">Entrada manual</span>
     </label>
     <label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px;border:1px solid var(--b2);border-radius:var(--r);cursor:pointer" id="cdopt-a">
       <input type="radio" name="cdmt" value="ajuste" onchange="onCDMovTipo()" style="display:none">
@@ -3039,10 +2830,8 @@ function salvarCDMov(){
   let movQty;
 
   if(tipoSel==='ajuste'){
-    // Ajuste: o campo é o novo total desejado (em unidades)
-    // Calcula a diferença e gera uma entrada ou saída
     const atual=getSkuQtyCD(_cdMovLoteId,_cdMovSkuId);
-    const novoTotal=inputVal; // campo já em unidades para ajuste
+    const novoTotal=inputVal;
     const diff=novoTotal-atual;
     if(diff===0){toast('Sem alteração — valor igual ao atual.','e');return;}
     tipo=diff>0?'entrada':'saida';
@@ -3059,17 +2848,14 @@ function salvarCDMov(){
   else if(tipoSel==='ajuste') obsTexto='Ajuste CD'+(obs?' — '+obs:'');
   else obsTexto=obs||'Entrada CD';
 
-  // Histórico geral
   const movGeral={id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,local:'cd',
     qty:movQty,obs:obsTexto,ts:Date.now(),usuario:_userEmail||'—'};
   d.movs.unshift(movGeral);
-  // cdMovs
   d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,qty:movQty,obs:obsTexto,ts:Date.now()});
   save(d);closeCDMov();renderCD();renderDashboard();
   toast(`${tipoSel==='saida'?'Venda':tipoSel==='ajuste'?'Ajuste':'Entrada'} registrada no CD!`,'s');
 }
 
-// ── CD Entrada Manual ──
 function openCDEntradaModal(){
   const d=getData();
   const sel=document.getElementById('cd-ent-receita');
@@ -3129,9 +2915,7 @@ function salvarCDEntrada(){
     const v=parseInt(document.getElementById('cdent-'+s.id)?.value)||0;
     if(!v)return;
     const unids=CAIXA[s.nome]?v*CAIXA[s.nome]:v;
-    // entrada no cdMovs
     d.cdMovs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
-    // entrada no histórico geral
     d.movs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
     count++;
   });
@@ -3140,8 +2924,6 @@ function salvarCDEntrada(){
   toast(`✅ ${count} SKU${count>1?'s':''} adicionado${count>1?'s':''} ao CD!`,'s');
 }
 
-// (Setup wizard removido — substituído por Google OAuth)
-
 // ════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════
@@ -3149,19 +2931,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeLote();closeMov();closeReceita();closeInsEntrada();closeEditMov();closeCDMov();closeDestino();closeCDEntrada();}
 });
 
-function migrarNomesSour(){
-  const d=getData();
-  if(!d.receitas||!d.receitas.length)return;
-  const mapa={"I'm Sour":"Im Sour","I'm So Sour":"Im So Sour","I'm Sour Baby":"Im Sour Baby","I'm F#cking Sour":"Im F#cking Sour"};
-  let alterou=false;
-  d.receitas.forEach(r=>{
-    if(mapa[r.nome]){r.nome=mapa[r.nome];alterou=true;}
-  });
-  if(alterou)save(d);
-}
-
 function migrarEmTanque(){
-  // Popula emTanque em lotes que ainda não têm o campo definido
   const d=getData();
   if(!d.lotes||!d.lotes.length)return;
   let alterou=false;
@@ -3169,12 +2939,10 @@ function migrarEmTanque(){
     if(l.emTanque!==undefined&&l.emTanque!==null)return;
     const temEntradas=(d.movs||[]).some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
     const enc=isLoteEncerrado(l);
-    // Só marca como Em Tanque se não tem entradas E não está encerrado E tem lotes ativos
     l.emTanque=!temEntradas&&!enc;
     alterou=true;
   });
   if(alterou){
-    // Salva direto no cache e agenda sync, sem re-renderizar
     _cache=d;
     localStorage.setItem('bstack3',JSON.stringify(d));
     if(_gToken){_dirty=true;clearTimeout(_saveTimer);_saveTimer=setTimeout(async()=>{_dirty=false;await saveRemote(_cache);},2000);}
@@ -3182,7 +2950,6 @@ function migrarEmTanque(){
 }
 
 initData().then(()=>{
-  migrarNomesSour();
   migrarEmTanque();
   renderDashboard();
   setInterval(pollRemote,120000);
