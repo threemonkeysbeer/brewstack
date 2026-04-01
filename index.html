@@ -357,7 +357,13 @@ tr:hover td{background:rgba(255,255,255,.015)}
 <div class="page" id="page-descida">
   <div class="ph">
     <div><div class="pt">REGIS<span>TRAR DESCIDA</span></div><div class="ps">Informe caixas/barris por lote</div></div>
-    <div style="display:flex;gap:10px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <select id="descida-sort" onchange="renderDescida()" style="background:var(--s2);border:1px solid var(--b2);color:var(--tm);padding:6px 10px;border-radius:var(--r);font-family:var(--fm);font-size:10px;cursor:pointer;outline:none">
+        <option value="novo">Mais recente primeiro</option>
+        <option value="antigo">Mais antigo primeiro</option>
+        <option value="nome-az">Cerveja A→Z</option>
+        <option value="nome-za">Cerveja Z→A</option>
+      </select>
       <button class="btn btn-s" onclick="clearDescida()">Limpar</button>
       <button class="btn btn-p" onclick="confirmarDescida()">✔ Registrar Descida</button>
     </div>
@@ -397,9 +403,8 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <div class="ftab" onclick="setLF('enc',this)">Encerrados</div>
       </div>
       <select id="lote-sort" onchange="renderLotes()" style="background:var(--s2);border:1px solid var(--b2);color:var(--tm);padding:6px 10px;border-radius:var(--r);font-family:var(--fm);font-size:10px;cursor:pointer;outline:none">
-        <option value="alfa">Ordem alfabética</option>
-        <option value="lote-az">Nº lote A→Z</option>
-        <option value="lote-za">Nº lote Z→A</option>
+        <option value="nome-az">Cerveja A→Z</option>
+        <option value="nome-za">Cerveja Z→A</option>
         <option value="novo">Mais recente primeiro</option>
         <option value="antigo">Mais antigo primeiro</option>
       </select>
@@ -1081,15 +1086,39 @@ function updateSidebarStatus(){
 
 
 // ── SKU qty ──
+function hasLoteEntradaEnvase(d,loteId){
+  return (d.movs||[]).some(m=>m.loteId===loteId&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
+}
+
+function inferLoteEmTanque(lote,d){
+  if(!lote)return false;
+  const temEntradas=hasLoteEntradaEnvase(d,lote.id);
+  const temEstimativa=(lote.skus||[]).some(ls=>(ls.qtdEstimada||0)>0);
+  return !temEntradas&&!lote.dtEnv&&!lote.encerradoEm&&(temEstimativa||!lote.volEnv);
+}
+
+function isLoteEmTanque(lote,d){
+  if(!lote)return false;
+  if(lote.emTanque!==undefined&&lote.emTanque!==null)return !!lote.emTanque;
+  return inferLoteEmTanque(lote,d||getData());
+}
+
+function getLoteSortDate(lote){
+  return lote.dtEnv||lote.dtProd||'';
+}
+
 function getSkuQty(loteId,skuId){
   const d=getData();
   const lote=d.lotes.find(l=>l.id===loteId);
   if(!lote)return 0;
-  if(lote.emTanque)return 0; // lotes em tanque não entram no estoque
+  if(isLoteEmTanque(lote,d))return 0; // lotes em tanque não entram no estoque
   const ls=lote.skus.find(s=>s.skuId===skuId);
   const inicial=ls?ls.qty:0;
   let q=inicial;
-  d.movs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
+  d.movs
+    .filter(m=>m.loteId===loteId&&m.skuId===skuId&&m.local!=='cd')
+    .sort((a,b)=>a.ts-b.ts)
+    .forEach(m=>{
     if(m.tipo==='saida')q-=m.qty;
     else if(m.tipo==='entrada')q+=m.qty;
     else q=m.qty;
@@ -1112,13 +1141,16 @@ function fmtQtyDisplay(nomesku,unid){
 }
 
 function isLoteEncerrado(lote){
+  if(!lote)return false;
+  if(isLoteEmTanque(lote))return false;
   if(lote.encerradoEm)return true;
+  if(!(lote.skus||[]).length)return false;
   return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
 }
 function getLoteEncerradoEm(lote){
   if(lote.encerradoEm)return new Date(lote.encerradoEm);
   const d=getData();
-  const movs=d.movs.filter(m=>m.loteId===lote.id).sort((a,b)=>b.ts-a.ts);
+  const movs=d.movs.filter(m=>m.loteId===lote.id&&m.local!=='cd').sort((a,b)=>b.ts-a.ts);
   return movs.length>0?new Date(movs[0].ts):null;
 }
 
@@ -1170,7 +1202,7 @@ function getBarrilPct(lote,receita){
   lote.skus.forEach(ls=>{
     const sku=receita.skus.find(x=>x.id===ls.skuId);
     if(!sku)return;
-    const movs=getData().movs.filter(m=>m.loteId===lote.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
+    const movs=getData().movs.filter(m=>m.loteId===lote.id&&m.skuId===ls.skuId&&m.tipo==='entrada'&&m.local!=='cd');
     const envasado=movs.reduce((a,m)=>a+m.qty,0);
     const ve=VOL_EFETIVO[sku.nome]||parseFloat(sku.vol)||0;
     const litros=ve<1?ve*envasado:ve*envasado;
@@ -1263,7 +1295,7 @@ function goTo(p){
 function renderDashboard(){
   const d=getData();
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const ativos=d.lotes.filter(l=>!isLoteEncerrado(l));
+  const ativos=d.lotes.filter(l=>!isLoteEmTanque(l,d)&&!isLoteEncerrado(l));
   const hoje=new Date().toDateString();
   const movsHoje=d.movs.filter(m=>new Date(m.ts).toDateString()===hoje).length;
   let venc=0;
@@ -1565,7 +1597,17 @@ function renderDashValidade(){
 // ════════════════════════════════════════════
 function renderDescida(){
   const d=getData();
-  const ativos=d.lotes.filter(l=>!isLoteEncerrado(l)).sort((a,b)=>(b.dtEnv||'').localeCompare(a.dtEnv||''));
+  const recMap={};
+  d.receitas.forEach(r=>recMap[r.id]=r);
+  const sortVal=(document.getElementById('descida-sort')||{}).value||'novo';
+  const ativos=d.lotes.filter(l=>!isLoteEmTanque(l,d)&&!isLoteEncerrado(l)).sort((a,b)=>{
+    const ra=recMap[a.receitaId]?.nome||'';
+    const rb=recMap[b.receitaId]?.nome||'';
+    if(sortVal==='nome-az')return ra.localeCompare(rb)||a.codigo.localeCompare(b.codigo);
+    if(sortVal==='nome-za')return rb.localeCompare(ra)||b.codigo.localeCompare(a.codigo);
+    if(sortVal==='antigo')return getLoteSortDate(a).localeCompare(getLoteSortDate(b))||ra.localeCompare(rb);
+    return getLoteSortDate(b).localeCompare(getLoteSortDate(a))||ra.localeCompare(rb);
+  });
   const el=document.getElementById('descida-container');
   if(!ativos.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📦</div>Nenhum lote ativo.</div>`;return;}
   el.innerHTML=ativos.map(l=>{
@@ -1725,20 +1767,28 @@ function renderHistorico(){
     const rowsHtml=g.movs.map(m=>{
       const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
       const dt=new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      const acaoCD=m.local==='cd'
+        ? (m.acao||((m.obs||'').startsWith('Ajuste CD')?'ajuste':m.tipo==='saida'?'saida':'entrada'))
+        : null;
       const sc=m.tipo==='saida'?'s':'e';
       const sign=m.tipo==='saida'?'−':'+';
       let qtyStr=`${sign}${m.qty}`;
       if(m.tipo==='saida'&&sku&&CAIXA[sku.nome]){const cx=Math.floor(m.qty/CAIXA[sku.nome]);qtyStr=`${sign}${cx} cx`;}
       // Label de destino para saídas
       let destinoTag='';
-      if(m.tipo==='saida'){
+      if(m.local==='cd'){
+        if(acaoCD==='ajuste')
+          destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:rgba(255,183,77,.14);color:var(--amber);padding:1px 6px;border-radius:2px;margin-left:4px">Ajuste CD</span>`;
+        else if(acaoCD==='entrada')
+          destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--blue-dim);color:#6cb2e8;padding:1px 6px;border-radius:2px;margin-left:4px">Entrada no CD</span>`;
+        else
+          destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--red-dim);color:var(--red);padding:1px 6px;border-radius:2px;margin-left:4px">Venda no CD</span>`;
+      } else if(m.tipo==='saida'){
         if(m.destino==='cd'||m.obs==='Transferência → CD Rio')
           destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--blue-dim);color:#6cb2e8;padding:1px 6px;border-radius:2px;margin-left:4px">→ CD Rio</span>`;
         else if(m.destino==='outro'||m.obs?.startsWith('Saída fábrica'))
           destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:rgba(255,255,255,.06);color:var(--tm);padding:1px 6px;border-radius:2px;margin-left:4px">Outro destino</span>`;
       }
-      if(m.local==='cd'&&m.tipo==='saida')
-        destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--red-dim);color:var(--red);padding:1px 6px;border-radius:2px;margin-left:4px">Saída do CD</span>`;
       return`<div class="hist-row">
         <div class="hist-dot ${m.tipo}"></div>
         <div class="hist-body">
@@ -1802,7 +1852,7 @@ function renderLotes(){
   document.getElementById('lotes-sub').textContent=`${lotes.length} lote${lotes.length!==1?'s':''}`;
 
   // Ordenação
-  const sortVal=(document.getElementById('lote-sort')||{}).value||'alfa';
+  const sortVal=(document.getElementById('lote-sort')||{}).value||'nome-az';
 
   // Agrupar por receita
   const recMap={};
@@ -1817,8 +1867,8 @@ function renderLotes(){
   // Ordena lotes dentro de cada grupo por data (mais novo primeiro por padrão)
   Object.values(grupos).forEach(arr=>{
     arr.sort((a,b)=>{
-      if(sortVal==='antigo')return (a.dtEnv||a.dtProd||'').localeCompare(b.dtEnv||b.dtProd||'');
-      return (b.dtEnv||b.dtProd||'').localeCompare(a.dtEnv||a.dtProd||'');
+      if(sortVal==='antigo')return getLoteSortDate(a).localeCompare(getLoteSortDate(b));
+      return getLoteSortDate(b).localeCompare(getLoteSortDate(a));
     });
   });
 
@@ -1827,18 +1877,18 @@ function renderLotes(){
     const na=recMap[a]?recMap[a].nome:'';
     const nb=recMap[b]?recMap[b].nome:'';
     // A-Z e Z-A: ordena pelo nome da cerveja (receita)
-    if(sortVal==='lote-az')return na.localeCompare(nb);
-    if(sortVal==='lote-za')return nb.localeCompare(na);
-    // Mais antigo/recente: ordena grupos pelo lote mais recente de cada receita
+    if(sortVal==='nome-az'||sortVal==='alfa')return na.localeCompare(nb);
+    if(sortVal==='nome-za'||sortVal==='lote-za')return nb.localeCompare(na);
+    // Mais antigo/recente: ordena grupos pelas datas dos lotes
     if(sortVal==='antigo'){
-      const da=grupos[a].map(l=>l.dtEnv||l.dtProd||'').sort()[0]||'';
-      const db=grupos[b].map(l=>l.dtEnv||l.dtProd||'').sort()[0]||'';
-      return da.localeCompare(db);
+      const da=grupos[a].map(getLoteSortDate).sort()[0]||'';
+      const db=grupos[b].map(getLoteSortDate).sort()[0]||'';
+      return da.localeCompare(db)||na.localeCompare(nb);
     }
     if(sortVal==='novo'){
-      const da=grupos[a].map(l=>l.dtEnv||l.dtProd||'').sort().reverse()[0]||'';
-      const db=grupos[b].map(l=>l.dtEnv||l.dtProd||'').sort().reverse()[0]||'';
-      return db.localeCompare(da);
+      const da=grupos[a].map(getLoteSortDate).sort().reverse()[0]||'';
+      const db=grupos[b].map(getLoteSortDate).sort().reverse()[0]||'';
+      return db.localeCompare(da)||na.localeCompare(nb);
     }
     // Padrão: alfabético por nome de receita
     return na.localeCompare(nb);
@@ -1907,6 +1957,7 @@ function toggleGroup(id){
 }
 
 function renderLoteCard(l,d,rec){
+  const tanque=isLoteEmTanque(l,d);
   const enc=isLoteEncerrado(l);
   const rend=l.volEnv&&l.volTeo?Math.round(l.volEnv/l.volTeo*100):null;
   const diasEnvase=l.dtProd&&l.dtEnv?diffDays(new Date(l.dtProd),new Date(l.dtEnv)):null;
@@ -1920,18 +1971,20 @@ function renderLoteCard(l,d,rec){
       validadeHtml=`<div class="exp-bar ${lv}" style="margin-bottom:8px">${lv==='crit'?'🚨':lv==='warn'?'⚠️':'✓'} ${txt}</div>`;}
   }
   const skusHtml=l.skus.map(ls=>{
-    const qty=getSkuQty(l.id,ls.skuId);
     const sku=rec?rec.skus.find(s=>s.id===ls.skuId):null;
     const nome=sku?sku.nome:ls.skuId;
     const tipo=sku?sku.tipo:'Lata';
+    const qty=tanque?(ls.qtdEstimada||0):getSkuQty(l.id,ls.skuId);
     const q=fmtQtyDisplay(nome,qty);
-    const subLabel=CAIXA[nome]?`${q.unid} unid`:'';
+    const subLabel=tanque
+      ? `${qty} unid estimadas`
+      : (CAIXA[nome]?`${q.unid} unid`:'');
     return`<div class="lote-sku-row">
       <span class="badge bg-${tipo.toLowerCase()}" style="flex-shrink:0">${tipo}</span>
       <span class="lote-sku-name">${nome}</span>
-      <span class="lote-sku-qty ${qty===0?'':'ok'}" style="${qty===0?'color:var(--td)':''}">${q.principal}${CAIXA[nome]?' cx':''}</span>
+      <span class="lote-sku-qty ${qty===0?'':'ok'}" style="${qty===0?'color:var(--td)':''}">${q.principal}${CAIXA[nome]?' cx':''}${tanque&&qty>0?' estim.':''}</span>
       ${subLabel?`<span class="lote-sku-sub">${subLabel}</span>`:''}
-      ${l.emTanque?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
+      ${tanque?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
     </div>`;
   }).join('');
   // perdas
@@ -1945,7 +1998,7 @@ function renderLoteCard(l,d,rec){
       <div>
         <div class="lote-id">${l.codigo}</div>
         <div class="lote-meta">Prod. ${fmtDate(l.dtProd)} · Envase ${fmtDate(l.dtEnv)}${l.obs?' · '+l.obs:''}</div>
-        <div style="margin-top:5px">${l.emTanque?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
+        <div style="margin-top:5px">${tanque?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
       </div>
       <div style="display:flex;gap:5px">
         <button class="btn-icon" title="Editar" onclick="openLoteModal('${l.id}')">✏️</button>
@@ -1997,15 +2050,7 @@ function _openLoteModal(id,preRecId,forcarTanque){
     document.getElementById('lote-dt-env').value=l.dtEnv||'';
     document.getElementById('lote-obs').value=l.obs||'';
     // Status: em tanque ou envasado
-    // Se emTanque não está definido no lote, infere pelo histórico:
-    // lote sem movimentações de entrada = provavelmente em tanque
-    let isTanque;
-    if(l.emTanque===undefined||l.emTanque===null){
-      const temEntradas=d.movs.some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
-      isTanque=!temEntradas&&!isLoteEncerrado(l);
-    } else {
-      isTanque=!!l.emTanque;
-    }
+    let isTanque=isLoteEmTanque(l,d);
     document.getElementById('lote-status-tanque').checked=isTanque;
     document.getElementById('lote-status-envasado').checked=!isTanque;
     // Reconstrói as qtds: se em tanque usa qtdEstimada, senão usa movimentações
@@ -2013,7 +2058,7 @@ function _openLoteModal(id,preRecId,forcarTanque){
       if(isTanque){
         return{skuId:ls.skuId,qty:ls.qtdEstimada||0};
       }
-      const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
+      const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada'&&m.local!=='cd');
       const qtdReal=entradas.reduce((acc,m)=>acc+m.qty,0);
       return{skuId:ls.skuId,qty:qtdReal};
     });
@@ -2056,7 +2101,7 @@ function renderTanque(){
   // Garante que lotes antigos sem o campo emTanque sejam migrados antes de filtrar
   migrarEmTanque();
   const d=getData();
-  const lotesTanque=d.lotes.filter(l=>l.emTanque===true&&!isLoteEncerrado(l));
+  const lotesTanque=d.lotes.filter(l=>isLoteEmTanque(l,d)&&!isLoteEncerrado(l));
   // Update badge
   const badge=document.getElementById('badge-tanque');
   if(badge){badge.textContent=lotesTanque.length;badge.style.display=lotesTanque.length>0?'':'none';}
@@ -2093,39 +2138,7 @@ function renderTanque(){
 }
 
 function renderTanqueCard(l,d,rec){
-  const diasTanque=l.dtProd?diffDays(new Date(l.dtProd),new Date()):0;
-  // Estimativas de SKU (se preenchidas)
-  const skusHtml=l.skus.filter(ls=>ls.qtdEstimada>0).map(ls=>{
-    const sku=rec?rec.skus.find(s=>s.id===ls.skuId):null;
-    const nome=sku?sku.nome:ls.skuId;
-    const tipo=sku?sku.tipo:'Lata';
-    return`<div class="lote-sku-row">
-      <span class="badge bg-${tipo.toLowerCase()}" style="flex-shrink:0">${tipo}</span>
-      <span class="lote-sku-name">${nome}</span>
-      <span class="lote-sku-qty" style="color:var(--tm)">${ls.qtdEstimada} unid <span style="font-family:var(--fm);font-size:9px">(estimado)</span></span>
-    </div>`;
-  }).join('');
-  return`<div class="lote-card" style="border-left:3px solid var(--amber)">
-    <div class="lote-header">
-      <div>
-        <div class="lote-id">${l.codigo}</div>
-        <div class="lote-meta">Prod. ${fmtDate(l.dtProd)}${l.obs?' · '+l.obs:''}</div>
-        <div style="margin-top:5px">
-          <span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>
-          <span style="font-family:var(--fm);font-size:10px;color:var(--tm);margin-left:8px">${diasTanque}d em produção</span>
-        </div>
-      </div>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-s btn-sm" onclick="openLoteModal('${l.id}')" style="background:var(--amber);color:#0c0b09;border:none">✅ Registrar Envase</button>
-        <button class="btn-icon del" title="Excluir" onclick="deleteLote('${l.id}')">×</button>
-      </div>
-    </div>
-    <div class="lote-grid">
-      <div class="lote-stat"><div class="lote-stat-lbl">Vol. Teórico</div><div class="lote-stat-val">${l.volTeo||'—'}${l.volTeo?'L':''}</div></div>
-      <div class="lote-stat"><div class="lote-stat-lbl">Dias em Tanque</div><div class="lote-stat-val">${diasTanque}d</div></div>
-    </div>
-    ${skusHtml?`<div style="font-family:var(--fm);font-size:9px;color:var(--td);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Estimativa</div><div class="lote-skus">${skusHtml}</div>`:''}
-  </div>`;
+  return renderLoteCard(l,d,rec);
 }
 
 function closeLote(){document.getElementById('ov-lote').classList.remove('open');}
@@ -2270,7 +2283,7 @@ function salvarLote(){
         const movsRestantes=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - ')));
         const novasEntradas=[];
         qtdsDigitadas.forEach(ls=>{
-          const saidasJaFeitas=d.movs.filter(m=>m.loteId===loteId&&m.skuId===ls.skuId&&m.tipo==='saida').reduce((acc,m)=>acc+m.qty,0);
+          const saidasJaFeitas=d.movs.filter(m=>m.loteId===loteId&&m.skuId===ls.skuId&&m.tipo==='saida'&&m.local!=='cd').reduce((acc,m)=>acc+m.qty,0);
           const qtdEntrada=ls.qty+saidasJaFeitas;
           if(qtdEntrada>0)novasEntradas.push({id:uid(),loteId,skuId:ls.skuId,tipo:'entrada',qty:qtdEntrada,obs:'Entrada - '+codigo,ts:Date.now(),usuario:_userEmail||'—'});
         });
@@ -2335,7 +2348,8 @@ function deleteLote(id){
   if(!l||!confirm(`Excluir lote "${l.codigo}"?`))return;
   d.lotes=d.lotes.filter(x=>x.id!==id);
   d.movs=d.movs.filter(m=>m.loteId!==id);
-  save(d);renderLotes();renderDashboard();toast('Lote excluído.');
+  if(d.cdMovs)d.cdMovs=d.cdMovs.filter(m=>m.loteId!==id);
+  save(d);renderLotes();renderTanque();renderDescida();renderCD();renderDashboard();toast('Lote excluído.');
 }
 
 // ════════════════════════════════════════════
@@ -2838,7 +2852,7 @@ function getSkuQtyCD(loteId, skuId){
   const d=getData();
   if(!d.cdMovs)return 0;
   let q=0;
-  d.cdMovs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
+  d.cdMovs.filter(m=>m.loteId===loteId&&m.skuId===skuId).sort((a,b)=>a.ts-b.ts).forEach(m=>{
     if(m.tipo==='entrada')q+=m.qty;
     else if(m.tipo==='saida')q-=m.qty;
     else q=m.qty;
@@ -2989,6 +3003,7 @@ function openCDMovModal(loteId,skuId){
   document.getElementById('cd-mov-qty').value='';
   document.getElementById('cd-mov-obs').value='';
   document.getElementById('ov-cd-mov').classList.add('open');
+  onCDMovTipo();
   setTimeout(()=>document.getElementById('cd-mov-qty').focus(),100);
 }
 
@@ -3047,10 +3062,10 @@ function salvarCDMov(){
 
   // Histórico geral
   const movGeral={id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,local:'cd',
-    qty:movQty,obs:obsTexto,ts:Date.now(),usuario:_userEmail||'—'};
+    acao:tipoSel,qty:movQty,obs:obsTexto,ts:Date.now(),usuario:_userEmail||'—'};
   d.movs.unshift(movGeral);
   // cdMovs
-  d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,qty:movQty,obs:obsTexto,ts:Date.now()});
+  d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,acao:tipoSel,qty:movQty,obs:obsTexto,ts:Date.now()});
   save(d);closeCDMov();renderCD();renderDashboard();
   toast(`${tipoSel==='saida'?'Venda':tipoSel==='ajuste'?'Ajuste':'Entrada'} registrada no CD!`,'s');
 }
@@ -3116,9 +3131,9 @@ function salvarCDEntrada(){
     if(!v)return;
     const unids=CAIXA[s.nome]?v*CAIXA[s.nome]:v;
     // entrada no cdMovs
-    d.cdMovs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
+    d.cdMovs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',acao:'entrada',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
     // entrada no histórico geral
-    d.movs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
+    d.movs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',acao:'entrada',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
     count++;
   });
   if(!count){toast('Informe ao menos uma quantidade.','e');return;}
@@ -3153,10 +3168,7 @@ function migrarEmTanque(){
   let alterou=false;
   d.lotes.forEach(l=>{
     if(l.emTanque!==undefined&&l.emTanque!==null)return;
-    const temEntradas=(d.movs||[]).some(m=>m.loteId===l.id&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - '));
-    const enc=isLoteEncerrado(l);
-    // Só marca como Em Tanque se não tem entradas E não está encerrado E tem lotes ativos
-    l.emTanque=!temEntradas&&!enc;
+    l.emTanque=inferLoteEmTanque(l,d);
     alterou=true;
   });
   if(alterou){
