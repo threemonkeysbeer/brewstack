@@ -218,11 +218,76 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .ins-entry-label{flex:1;font-size:13px}
 .ins-entry-input{width:100px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:7px 10px;border-radius:var(--r);font-family:var(--fm);font-size:13px;text-align:right;outline:none;transition:border-color .15s}
 .ins-entry-input:focus{border-color:var(--amber)}
+
+/* ════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ════════════════════════════════════════════ */
+.mob-header{display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:var(--s1);border-bottom:1px solid var(--b1);padding:12px 16px;align-items:center;justify-content:space-between;gap:10px}
+.mob-logo{font-family:var(--fd);font-size:20px;letter-spacing:2px;color:var(--amber)}
+.mob-logo em{color:var(--text);font-style:normal}
+.mob-hamburger{background:none;border:1px solid var(--b2);color:var(--tm);width:36px;height:36px;border-radius:var(--r);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mob-page-title{font-family:var(--fm);font-size:11px;color:var(--tm);letter-spacing:1px;text-transform:uppercase;flex:1;text-align:center}
+
+@media(max-width:768px){
+  .mob-header{display:flex}
+  .app{flex-direction:column;padding-top:57px}
+  .sidebar{
+    position:fixed;top:57px;left:0;bottom:0;z-index:400;
+    width:260px;transform:translateX(-100%);
+    transition:transform .25s ease;overflow-y:auto;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;top:57px;background:rgba(0,0,0,.6);z-index:399}
+  .sidebar-overlay.open{display:block}
+  .main{padding:16px 14px 80px;min-width:0;width:100%}
+  /* Títulos menores */
+  .pt{font-size:26px;letter-spacing:2px}
+  .ph{margin-bottom:18px;padding-bottom:14px}
+  /* Stats grid: 2 por linha */
+  .stats{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .stat{padding:12px 14px}
+  .stat-val{font-size:26px}
+  /* Dashboard grid: coluna única */
+  div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+  /* Tabelas: scroll horizontal */
+  .card{overflow-x:auto}
+  table{min-width:480px}
+  th,td{padding:8px 12px;font-size:12px}
+  /* Lote cards */
+  .lote-card{padding:12px}
+  .lote-grid{grid-template-columns:repeat(3,1fr)!important}
+  .lote-stat-val{font-size:15px}
+  /* Rec group headers */
+  .rec-group-name{font-size:16px}
+  /* Modais: tela cheia no mobile */
+  .modal,.modal.wide{width:100%!important;max-width:100%!important;margin:0;border-radius:0;min-height:100dvh;max-height:100dvh;overflow-y:auto}
+  .ov{padding:0!important;align-items:flex-start}
+  /* Botões ph-actions: wrap */
+  .ph-actions{gap:6px}
+  .btn{padding:8px 14px;font-size:12px}
+  /* Formulários */
+  .frow,.frow3{flex-direction:column!important}
+  .field{width:100%}
+  /* Desc-foot */
+  .desc-foot{flex-direction:column;gap:10px;padding:12px 16px}
+  /* Login screen */
+  #login-screen{padding:24px 20px}
+  /* CD table */
+  .lote-sku-row{flex-wrap:wrap;gap:6px}
+  /* Rec group stats */
+  .rec-group-head>div:first-child>div:last-child{display:none}
+}
 </style>
 </head>
 <body>
+<div class="mob-header">
+  <button class="mob-hamburger" onclick="toggleSidebar()" id="mob-hamburger">☰</button>
+  <div class="mob-page-title" id="mob-page-title">DASHBOARD</div>
+  <div class="mob-logo"><em>BREW</em>STACK</div>
+</div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <div class="app">
-<nav class="sidebar">
+<nav class="sidebar" id="sidebar">
   <div class="brand">
     <div class="brand-logo"><em>BREW</em>STACK</div>
     <div class="brand-sub">Controle de Estoque v3</div>
@@ -444,7 +509,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
         <span>🧪 Em Tanque <span style="font-family:var(--fm);font-size:10px;color:var(--tm)">(ainda não envasado)</span></span>
       </label>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-        <input type="radio" name="lote-status" id="lote-status-envasado" value="envasado" checked onchange="onLoteStatusChange()" style="accent-color:var(--amber);width:15px;height:15px">
+        <input type="radio" name="lote-status" id="lote-status-envasado" value="envasado" onchange="onLoteStatusChange()" style="accent-color:var(--amber);width:15px;height:15px">
         <span>✅ Envasado</span>
       </label>
     </div>
@@ -1166,11 +1231,28 @@ function seedIfEmpty(){
 // ════════════════════════════════════════════
 // NAV
 // ════════════════════════════════════════════
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+function setMobPageTitle(title){
+  const el=document.getElementById('mob-page-title');
+  if(el)el.textContent=title;
+}
 function goTo(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   document.getElementById('nav-'+p).classList.add('active');
+  closeSidebar();
+  const titles={dashboard:'DASHBOARD',descida:'REG. DESCIDA',historico:'HISTÓRICO',lotes:'LOTES',tanque:'EM TANQUE',analytics:'ANALYTICS',insumos:'EST. ENVASE',cd:'ESTOQUE CD',receitas:'RECEITAS'};
+  setMobPageTitle(titles[p]||p.toUpperCase());
   ({dashboard:renderDashboard,descida:renderDescida,historico:renderHistorico,
     lotes:renderLotes,tanque:renderTanque,analytics:renderAnalytics,insumos:renderInsumos,cd:renderCD,receitas:renderReceitas})[p]?.();
 }
@@ -1732,25 +1814,33 @@ function renderLotes(){
     grupos[rid].push(l);
   });
 
-  // Para ordenações não-alfabéticas, ordena dentro de cada grupo
-  const sortFn=(a,b)=>{
-    if(sortVal==='lote-az')return (a.codigo||'').localeCompare(b.codigo||'');
-    if(sortVal==='lote-za')return (b.codigo||'').localeCompare(a.codigo||'');
-    if(sortVal==='antigo')return (a.dtEnv||a.dtProd||'').localeCompare(b.dtEnv||b.dtProd||'');
-    if(sortVal==='novo')return (b.dtEnv||b.dtProd||'').localeCompare(a.dtEnv||a.dtProd||'');
-    return 0;
-  };
-  Object.values(grupos).forEach(arr=>arr.sort(sortFn));
+  // Ordena lotes dentro de cada grupo por data (mais novo primeiro por padrão)
+  Object.values(grupos).forEach(arr=>{
+    arr.sort((a,b)=>{
+      if(sortVal==='antigo')return (a.dtEnv||a.dtProd||'').localeCompare(b.dtEnv||b.dtProd||'');
+      return (b.dtEnv||b.dtProd||'').localeCompare(a.dtEnv||a.dtProd||'');
+    });
+  });
 
-  // Ordena grupos (receitas) alfabeticamente
+  // Ordena grupos (receitas)
   const recIds=Object.keys(grupos).sort((a,b)=>{
     const na=recMap[a]?recMap[a].nome:'';
     const nb=recMap[b]?recMap[b].nome:'';
-    // Para lote-az/za também ordena os grupos pelo primeiro lote
-    if(sortVal==='lote-az')return (grupos[a][0]?.codigo||'').localeCompare(grupos[b][0]?.codigo||'');
-    if(sortVal==='lote-za')return (grupos[b][0]?.codigo||'').localeCompare(grupos[a][0]?.codigo||'');
-    if(sortVal==='antigo')return (grupos[a][0]?.dtEnv||grupos[a][0]?.dtProd||'').localeCompare(grupos[b][0]?.dtEnv||grupos[b][0]?.dtProd||'');
-    if(sortVal==='novo')return (grupos[b][0]?.dtEnv||grupos[b][0]?.dtProd||'').localeCompare(grupos[a][0]?.dtEnv||grupos[a][0]?.dtProd||'');
+    // A-Z e Z-A: ordena pelo nome da cerveja (receita)
+    if(sortVal==='lote-az')return na.localeCompare(nb);
+    if(sortVal==='lote-za')return nb.localeCompare(na);
+    // Mais antigo/recente: ordena grupos pelo lote mais recente de cada receita
+    if(sortVal==='antigo'){
+      const da=grupos[a].map(l=>l.dtEnv||l.dtProd||'').sort()[0]||'';
+      const db=grupos[b].map(l=>l.dtEnv||l.dtProd||'').sort()[0]||'';
+      return da.localeCompare(db);
+    }
+    if(sortVal==='novo'){
+      const da=grupos[a].map(l=>l.dtEnv||l.dtProd||'').sort().reverse()[0]||'';
+      const db=grupos[b].map(l=>l.dtEnv||l.dtProd||'').sort().reverse()[0]||'';
+      return db.localeCompare(da);
+    }
+    // Padrão: alfabético por nome de receita
     return na.localeCompare(nb);
   });
 
@@ -2917,7 +3007,8 @@ function onCDMovTipo(){
     opt.style.borderColor=clr;opt.style.background=bg;opt.querySelector('span:last-child').style.color=clr;
   }
   document.getElementById('cd-mov-qty-lbl').textContent=
-    t==='ajuste'?'Novo total (unidades)':CAIXA[_cdMovSkuNome]?'Caixas':'Unidades';
+    t==='ajuste'?'Novo total desejado (unid)':CAIXA[_cdMovSkuNome]?'Caixas':'Unidades';
+  document.getElementById('cd-mov-qty-hint').textContent=t==='ajuste'?'Informe a quantidade total que deve ficar no CD':(CAIXA[_cdMovSkuNome]?`1 cx = ${CAIXA[_cdMovSkuNome]} unid`:'');
 }
 
 function closeCDMov(){document.getElementById('ov-cd-mov').classList.remove('open');}
@@ -2925,24 +3016,43 @@ function closeCDMov(){document.getElementById('ov-cd-mov').classList.remove('ope
 function salvarCDMov(){
   const d=getData();
   if(!d.cdMovs)d.cdMovs=[];
-  const tipo=document.querySelector('[name="cdmt"]:checked')?.value||'saida';
+  const tipoSel=document.querySelector('[name="cdmt"]:checked')?.value||'saida';
   const inputVal=parseInt(document.getElementById('cd-mov-qty').value);
   const obs=document.getElementById('cd-mov-obs').value.trim();
   if(isNaN(inputVal)||inputVal<0){toast('Quantidade inválida.','e');return;}
-  const isCx=tipo!=='ajuste'&&!!CAIXA[_cdMovSkuNome];
-  const unids=isCx?inputVal*CAIXA[_cdMovSkuNome]:inputVal;
-  let movQty=unids;
-  if(tipo==='ajuste'){const atual=getSkuQtyCD(_cdMovLoteId,_cdMovSkuId);movQty=Math.abs(unids-atual);}
-  // Adiciona ao histórico geral também (para aparecer no Histórico)
-  const lote=d.lotes.find(l=>l.id===_cdMovLoteId);
-  const rec=lote?d.receitas.find(r=>r.id===lote.receitaId):null;
+
+  let tipo=tipoSel;
+  let movQty;
+
+  if(tipoSel==='ajuste'){
+    // Ajuste: o campo é o novo total desejado (em unidades)
+    // Calcula a diferença e gera uma entrada ou saída
+    const atual=getSkuQtyCD(_cdMovLoteId,_cdMovSkuId);
+    const novoTotal=inputVal; // campo já em unidades para ajuste
+    const diff=novoTotal-atual;
+    if(diff===0){toast('Sem alteração — valor igual ao atual.','e');return;}
+    tipo=diff>0?'entrada':'saida';
+    movQty=Math.abs(diff);
+  } else {
+    const isCx=!!CAIXA[_cdMovSkuNome];
+    movQty=isCx?inputVal*CAIXA[_cdMovSkuNome]:inputVal;
+  }
+
+  if(!movQty||movQty<=0){toast('Quantidade inválida.','e');return;}
+
+  let obsTexto='';
+  if(tipoSel==='saida') obsTexto='Saída do CD'+(obs?' — '+obs:'');
+  else if(tipoSel==='ajuste') obsTexto='Ajuste CD'+(obs?' — '+obs:'');
+  else obsTexto=obs||'Entrada CD';
+
+  // Histórico geral
   const movGeral={id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,local:'cd',
-    qty:movQty,obs:tipo==='saida'?('Saída do CD'+(obs?' — '+obs:'')):(obs||'CD Rio'),ts:Date.now(),usuario:_userEmail||'—'};
+    qty:movQty,obs:obsTexto,ts:Date.now(),usuario:_userEmail||'—'};
   d.movs.unshift(movGeral);
-  // Registra também no cdMovs
-  d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,qty:movQty,obs:movGeral.obs,ts:Date.now()});
+  // cdMovs
+  d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,qty:movQty,obs:obsTexto,ts:Date.now()});
   save(d);closeCDMov();renderCD();renderDashboard();
-  toast(`${tipo==='saida'?'Venda':'Movimentação'} registrada no CD!`,'s');
+  toast(`${tipoSel==='saida'?'Venda':tipoSel==='ajuste'?'Ajuste':'Entrada'} registrada no CD!`,'s');
 }
 
 // ── CD Entrada Manual ──
