@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <!-- saved from url=(0067)file:///Users/gabrielrocha/Downloads/Brewstack%20(codex)/index.html -->
 <html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BrewStack — Cervejaria</title>
-<script src="./BrewStack — Cervejaria 2_files/client" async="" defer=""></script>
-<link href="./BrewStack — Cervejaria 2_files/css2" rel="stylesheet">
+<script id="google-gsi-script" src="./BrewStack — Cervejaria 3_files/client" async="" defer=""></script>
+<link href="./BrewStack — Cervejaria 3_files/css2" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1028,6 +1027,7 @@ let _saveTimer = null;
 let _gToken = null;      // access token atual
 let _driveFileId = null; // ID do arquivo no Drive
 let _userEmail = null;
+let _gsiLoadPromise = null;
 
 // ════════════════════════════════════════════
 // LOADING
@@ -1046,6 +1046,45 @@ function hideLoading(){const el=document.getElementById('loading-overlay');if(el
 
 function emptyData(){return{receitas:[],lotes:[],movs:[],cdMovs:[],insumos:{}};}
 
+function hasGoogleIdentity(){
+  return !!(window.google&&google.accounts&&google.accounts.oauth2);
+}
+
+function loadGoogleIdentityScript(timeoutMs=5000){
+  if(hasGoogleIdentity())return Promise.resolve(true);
+  if(_gsiLoadPromise)return _gsiLoadPromise;
+  _gsiLoadPromise=new Promise(resolve=>{
+    let done=false;
+    const finish=(ok)=>{
+      if(done)return;
+      done=true;
+      if(!ok)_gsiLoadPromise=null;
+      resolve(ok);
+    };
+    const existing=document.getElementById('google-gsi-script');
+    const script=existing||document.createElement('script');
+    const onLoad=()=>setTimeout(()=>finish(hasGoogleIdentity()),80);
+    const onError=()=>finish(false);
+
+    if(!existing){
+      script.id='google-gsi-script';
+      script.src='https://accounts.google.com/gsi/client';
+      script.async=true;
+      script.defer=true;
+      script.addEventListener('load',onLoad,{once:true});
+      script.addEventListener('error',onError,{once:true});
+      document.head.appendChild(script);
+    }else{
+      existing.addEventListener('load',onLoad,{once:true});
+      existing.addEventListener('error',onError,{once:true});
+      setTimeout(()=>finish(hasGoogleIdentity()),80);
+    }
+
+    setTimeout(()=>finish(hasGoogleIdentity()),timeoutMs);
+  });
+  return _gsiLoadPromise;
+}
+
 // ════════════════════════════════════════════
 // GOOGLE AUTH
 // ════════════════════════════════════════════
@@ -1063,10 +1102,15 @@ function showLoginError(msg){
   if(el){el.textContent=msg;el.style.display='block';}
 }
 
-function signInGoogle(){
-  if(!window.google){showLoginError('Google Identity não carregou. Verifique a conexão.');return;}
+async function signInGoogle(){
   const btn=document.getElementById('btn-google-login');
   if(btn){btn.textContent='Entrando...';btn.disabled=true;}
+  const gsiReady=await loadGoogleIdentityScript();
+  if(!gsiReady||!hasGoogleIdentity()){
+    showLoginError('Google Identity não carregou. Verifique a conexão.');
+    if(btn){btn.textContent='Entrar com Google';btn.disabled=false;}
+    return;
+  }
   google.accounts.oauth2.initTokenClient({
     client_id: GOOG_CLIENT_ID,
     scope: DRIVE_SCOPE+' email profile',
@@ -1104,18 +1148,20 @@ function signInGoogle(){
 async function silentRefreshToken(){
   // Tenta renovar o token silenciosamente (sem popup)
   return new Promise((resolve)=>{
-    if(!window.google){resolve(false);return;}
-    const hint=localStorage.getItem('bstack_email')||'';
-    google.accounts.oauth2.initTokenClient({
-      client_id:GOOG_CLIENT_ID,
-      scope:DRIVE_SCOPE+' email profile',
-      hint,
-      prompt:'',
-      callback:(resp)=>{
-        if(resp.error||!resp.access_token){resolve(false);return;}
-        _gToken=resp.access_token;resolve(true);
-      }
-    }).requestAccessToken();
+    loadGoogleIdentityScript().then((ok)=>{
+      if(!ok||!hasGoogleIdentity()){resolve(false);return;}
+      const hint=localStorage.getItem('bstack_email')||'';
+      google.accounts.oauth2.initTokenClient({
+        client_id:GOOG_CLIENT_ID,
+        scope:DRIVE_SCOPE+' email profile',
+        hint,
+        prompt:'',
+        callback:(resp)=>{
+          if(resp.error||!resp.access_token){resolve(false);return;}
+          _gToken=resp.access_token;resolve(true);
+        }
+      }).requestAccessToken();
+    }).catch(()=>resolve(false));
   });
 }
 
@@ -1253,7 +1299,10 @@ async function initData(){
   showLoading('Iniciando...');
   // Tenta renovar token silenciosamente se já logou antes
   const savedEmail=localStorage.getItem('bstack_email');
-  if(savedEmail&&window.google&&GOOG_CLIENT_ID!=='COLE_SEU_CLIENT_ID_AQUI.apps.googleusercontent.com'){
+  if(savedEmail&&GOOG_CLIENT_ID!=='COLE_SEU_CLIENT_ID_AQUI.apps.googleusercontent.com'){
+    await loadGoogleIdentityScript(2500);
+  }
+  if(savedEmail&&hasGoogleIdentity()&&GOOG_CLIENT_ID!=='COLE_SEU_CLIENT_ID_AQUI.apps.googleusercontent.com'){
     const ok=await silentRefreshToken();
     if(ok){
       _userEmail=savedEmail;
@@ -3411,7 +3460,8 @@ initData().then(()=>{
   renderDashboard();
   setInterval(pollRemote,120000);
 });
-</script><div id="loading-overlay" style="position: fixed; inset: 0px; background: rgba(12, 11, 9, 0.85); z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-family: var(--fm); color: var(--tm); font-size: 13px; letter-spacing: 1px;"><div id="loading-spinner" style="width:32px;height:32px;border:2px solid var(--b2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite"></div><div id="loading-msg">Iniciando...</div></div>
+</script><div id="loading-overlay" style="position: fixed; inset: 0px; background: rgba(12, 11, 9, 0.85); z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-family: var(--fm); color: var(--tm); font-size: 13px; letter-spacing: 1px;"><div id="loading-spinner" style="width:32px;height:32px;border:2px solid var(--b2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite"></div><div id="loading-msg">Iniciando...</div></div><div id="loading-overlay" style="position: fixed; inset: 0px; background: rgba(12, 11, 9, 0.85); z-index: 9000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-family: var(--fm); color: var(--tm); font-size: 13px; letter-spacing: 1px;"><div id="loading-spinner" style="width:32px;height:32px;border:2px solid var(--b2);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite"></div><div id="loading-msg">Iniciando...</div></div>
+
 
 
 </body></html>
