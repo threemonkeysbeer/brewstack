@@ -2024,7 +2024,7 @@ function _openLoteModal(id,preRecId,forcarTanque){
     _loteEnvasado=envasado;
     // Reconstrói as qtds: se em tanque usa qtdEstimada, senão usa movimentações
     const skusComQtd=l.skus.map(ls=>{
-      if(isTanque){
+      if(!envasado){
         return{skuId:ls.skuId,qty:ls.qtdEstimada||0};
       }
       const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
@@ -3022,9 +3022,10 @@ function onCDMovTipo(){
     const bg=t==='saida'?'var(--red-dim)':'var(--amber-dim)';
     opt.style.borderColor=clr;opt.style.background=bg;opt.querySelector('span:last-child').style.color=clr;
   }
+  const isCxAdj=!!CAIXA[_cdMovSkuNome];
   document.getElementById('cd-mov-qty-lbl').textContent=
-    t==='ajuste'?'Novo total desejado (unid)':CAIXA[_cdMovSkuNome]?'Caixas':'Unidades';
-  document.getElementById('cd-mov-qty-hint').textContent=t==='ajuste'?'Informe a quantidade total que deve ficar no CD':(CAIXA[_cdMovSkuNome]?`1 cx = ${CAIXA[_cdMovSkuNome]} unid`:'');
+    t==='ajuste'?(isCxAdj?'Novo total (caixas)':'Novo total (unidades)'):isCxAdj?'Caixas':'Unidades';
+  document.getElementById('cd-mov-qty-hint').textContent=t==='ajuste'?'Informe o total correto que está no CD agora':(isCxAdj?`1 cx = ${CAIXA[_cdMovSkuNome]} unid`:'');
 }
 
 function closeCDMov(){document.getElementById('ov-cd-mov').classList.remove('open');}
@@ -3041,11 +3042,12 @@ function salvarCDMov(){
   let movQty;
 
   if(tipoSel==='ajuste'){
-    // Ajuste: o campo é o novo total desejado (em unidades)
-    // Calcula a diferença e gera uma entrada ou saída
+    // Ajuste: o campo está em caixas (se SKU usa caixas) ou unidades
+    // Converte para unidades antes de comparar com getSkuQtyCD (que retorna unidades)
+    const isCxAdj=!!CAIXA[_cdMovSkuNome];
+    const novoTotalUnid=isCxAdj?inputVal*CAIXA[_cdMovSkuNome]:inputVal;
     const atual=getSkuQtyCD(_cdMovLoteId,_cdMovSkuId);
-    const novoTotal=inputVal; // campo já em unidades para ajuste
-    const diff=novoTotal-atual;
+    const diff=novoTotalUnid-atual;
     if(diff===0){toast('Sem alteração — valor igual ao atual.','e');return;}
     tipo=diff>0?'entrada':'saida';
     movQty=Math.abs(diff);
