@@ -789,7 +789,20 @@ function fmtDate(s){if(!s)return'—';return new Date(s).toLocaleDateString('pt-
 const GOOG_CLIENT_ID = '970026253459-c81mcdk0cna10vfsltposgdmf2t7ms3n.apps.googleusercontent.com';
 const ALLOWED_DOMAIN = 'threemonkeysbeer.com';
 const DRIVE_FILE_NAME = 'brewstack-data.json';
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+// ─────────────────────────────────────────────────────────────────────────────
+// ID DO ARQUIVO COMPARTILHADO NO DRIVE DA EMPRESA
+// Como configurar:
+//   1. Crie um arquivo brewstack-data.json vazio no Google Drive da conta da empresa
+//   2. Compartilhe-o com edição para todos os @threemonkeysbeer.com
+//   3. Abra o arquivo no Drive, copie o ID da URL (trecho entre /d/ e /view)
+//   4. Cole aqui abaixo, substituindo o placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+const SHARED_FILE_ID = 'COLE_O_ID_DO_ARQUIVO_AQUI';
+
+// Scope drive permite ler/escrever arquivos compartilhados pelo Drive (necessário
+// para o arquivo fixo da empresa). drive.file só funciona para arquivos criados
+// pelo próprio app, não para arquivos compartilhados por outro usuário.
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
 
 let _cache = null;
 let _dirty = false;
@@ -892,23 +905,51 @@ async function silentRefreshToken(){
 // GOOGLE DRIVE: ler e salvar
 // ════════════════════════════════════════════
 async function findOrCreateDriveFile(){
-  // Busca arquivo existente no appDataFolder
-  const search=await fetch(
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${DRIVE_FILE_NAME}'&fields=files(id,name)`,
-    {headers:{Authorization:'Bearer '+_gToken}}
-  );
-  const sj=await search.json();
-  if(sj.files&&sj.files.length>0){_driveFileId=sj.files[0].id;return true;}
-  // Cria arquivo novo
-  const meta={name:DRIVE_FILE_NAME,parents:['appDataFolder']};
-  const form=new FormData();
-  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
-  form.append('file',new Blob([JSON.stringify(emptyData())],{type:'application/json'}));
-  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-    {method:'POST',headers:{Authorization:'Bearer '+_gToken},body:form});
-  const cj=await cr.json();
-  _driveFileId=cj.id;
-  return false; // false = arquivo novo (sem dados)
+  // ── MODO ARQUIVO COMPARTILHADO ──────────────────────────────────────────
+  // Todos os usuários @threemonkeysbeer.com apontam para o mesmo arquivo no
+  // Drive da empresa. O arquivo deve existir e estar compartilhado com edição
+  // para o domínio antes de usar o app.
+  if(SHARED_FILE_ID && SHARED_FILE_ID !== 'COLE_O_ID_DO_ARQUIVO_AQUI'){
+    _driveFileId = SHARED_FILE_ID;
+    // Verifica se o arquivo é acessível (pode retornar 404 se o ID estiver errado
+    // ou se o arquivo não foi compartilhado corretamente com este usuário)
+    try{
+      const check = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${_driveFileId}?fields=id,name`,
+        {headers:{Authorization:'Bearer '+_gToken}}
+      );
+      if(!check.ok){
+        const err = await check.json().catch(()=>({}));
+        console.error('Drive file check failed:',check.status, err);
+        if(check.status===404){
+          showLoginError(`Arquivo não encontrado (ID: ${SHARED_FILE_ID}). Verifique se o ID está correto e se o arquivo foi compartilhado com você.`);
+        } else if(check.status===403){
+          showLoginError(`Sem permissão para acessar o arquivo. Peça ao administrador para compartilhar o arquivo com sua conta ${_userEmail}.`);
+        } else {
+          showLoginError(`Erro ao acessar arquivo compartilhado (${check.status}). Verifique a conexão.`);
+        }
+        return false;
+      }
+      return true; // arquivo existe e acessível
+    }catch(e){
+      console.error('Drive connectivity error:',e);
+      return false;
+    }
+  }
+
+  // ── FALLBACK: SHARED_FILE_ID não configurado ─────────────────────────────
+  // Mostra banner de configuração e cai no localStorage temporariamente
+  showConfigBanner();
+  return false;
+}
+
+function showConfigBanner(){
+  if(document.getElementById('config-banner-shared'))return;
+  const b=document.createElement('div');
+  b.id='config-banner-shared';
+  b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:850;background:var(--red);color:#fff;font-family:var(--fm);font-size:11px;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;line-height:1.5';
+  b.innerHTML=`<span>⚠️ <strong>SHARED_FILE_ID não configurado.</strong> Os dados estão sendo salvos apenas localmente neste navegador. Siga as instruções no código para criar e compartilhar o arquivo do Drive da empresa.</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--fm);font-size:11px;flex-shrink:0">×</button>`;
+  document.body.prepend(b);
 }
 
 async function ensureAuth(){
@@ -947,30 +988,31 @@ function getData(){return _cache||emptyData();}
 function save(d){
   _cache=d;
   localStorage.setItem('bstack3',JSON.stringify(d));
-  if(!_gToken)return;
+  if(!_gToken||!_driveFileId)return;
   _dirty=true;
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(async()=>{
     if(!_dirty)return;
     _dirty=false;
-    // Merge: carrega versão mais recente antes de salvar
-    const latest=await loadRemote();
-    if(latest&&latest.receitas){
-      // Usa a versão local (mais recente para este usuário) mas mantém movs mais completos
-      const localMovCount=((_cache.movs||[]).length)+(_cache.cdMovs||[]).length;
-      const remoteMovCount=((latest.movs||[]).length)+(latest.cdMovs||[]).length;
-      if(remoteMovCount>localMovCount){
-        // Outro usuário adicionou movs — faz merge simples de movs
+    // Arquivo compartilhado: sempre busca versão mais recente antes de salvar
+    // para fazer merge de movimentações de outros usuários que possam ter gravado
+    // enquanto este usuário estava editando.
+    try{
+      const latest=await loadRemote();
+      if(latest&&latest.receitas){
+        // Merge de movimentações: une IDs de ambas as versões (sem duplicar)
         const myMovIds=new Set((_cache.movs||[]).map(m=>m.id));
         const myCdIds=new Set((_cache.cdMovs||[]).map(m=>m.id));
-        const novaMovs=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
-        const novaCdMovs=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
-        if(novaMovs.length||novaCdMovs.length){
-          _cache.movs=[...(_cache.movs||[]),...novaMovs];
-          _cache.cdMovs=[...(_cache.cdMovs||[]),...novaCdMovs];
+        const movsExtras=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
+        const cdMovsExtras=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
+        if(movsExtras.length||cdMovsExtras.length){
+          _cache.movs=[...(_cache.movs||[]),...movsExtras].sort((a,b)=>b.ts-a.ts);
+          _cache.cdMovs=[...(_cache.cdMovs||[]),...cdMovsExtras].sort((a,b)=>b.ts-a.ts);
+          // Atualiza cache local com dados merged
+          localStorage.setItem('bstack3',JSON.stringify(_cache));
         }
       }
-    }
+    }catch(e){console.warn('Merge pre-save failed, saving anyway:',e);}
     await saveRemote(_cache);
   },800);
 }
@@ -982,39 +1024,57 @@ async function flushSave(){
 }
 
 async function initDriveData(){
-  showLoading('Conectando ao Google Drive...');
+  showLoading('Conectando ao arquivo compartilhado...');
   try{
-    const isExisting=await findOrCreateDriveFile();
-    if(isExisting){
-      showLoading('Carregando dados...');
-      const remote=await loadRemote();
-      if(remote&&remote.receitas&&remote.receitas.length>0){
-        _cache=remote;
-        localStorage.setItem('bstack3',JSON.stringify(_cache));
-        hideLoading();renderDashboard();setInterval(pollRemote,120000);return;
-      }
+    const ok=await findOrCreateDriveFile();
+    if(!ok){
+      // SHARED_FILE_ID não configurado ou inacessível — usa localStorage como fallback
+      try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
+      catch(e){_cache=emptyData();}
+      seedIfEmpty();hideLoading();renderDashboard();return;
     }
-    // Arquivo novo ou vazio: tenta migrar do localStorage
+
+    // Carrega dados do arquivo compartilhado
+    showLoading('Carregando dados da equipe...');
+    const remote=await loadRemote();
+
+    if(remote&&remote.receitas&&remote.receitas.length>0){
+      // Arquivo compartilhado tem dados — usa direto
+      _cache=remote;
+      localStorage.setItem('bstack3',JSON.stringify(_cache));
+      hideLoading();renderDashboard();
+      setInterval(pollRemote,30000); // poll a cada 30s (dados compartilhados mudam com mais frequência)
+      return;
+    }
+
+    // Arquivo existe mas está vazio — verifica se tem dados locais para fazer seed inicial
     const local=localStorage.getItem('bstack3');
     if(local){
       try{
-        _cache=JSON.parse(local);
-        if(_cache&&_cache.receitas&&_cache.receitas.length>0){
-          showLoading('Migrando dados para o Drive...');
+        const localData=JSON.parse(local);
+        if(localData&&localData.receitas&&localData.receitas.length>0){
+          showLoading('Subindo dados locais para o Drive compartilhado...');
+          _cache=localData;
           await saveRemote(_cache);
           hideLoading();
-          toast('Dados migrados para o Google Drive!','s');
-          renderDashboard();setInterval(pollRemote,120000);return;
+          toast('Dados locais sincronizados com o Drive da equipe!','s');
+          renderDashboard();setInterval(pollRemote,30000);return;
         }
       }catch(e){}
     }
-    // Tudo novo: seed
+
+    // Tudo novo: seed de receitas padrão
     _cache=emptyData();seedIfEmpty();
     await saveRemote(_cache);
-    hideLoading();renderDashboard();setInterval(pollRemote,120000);
+    hideLoading();renderDashboard();setInterval(pollRemote,30000);
   }catch(e){
     hideLoading();
+    console.error('initDriveData error:',e);
     toast('Erro ao acessar Drive: '+e.message,'e');
+    // Fallback local para não travar o app
+    try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
+    catch(e2){_cache=emptyData();}
+    seedIfEmpty();renderDashboard();
   }
 }
 
@@ -1048,7 +1108,7 @@ async function initData(){
   }
 }
 
-// Poll a cada 2 minutos
+// Poll a cada 30 segundos (arquivo compartilhado — múltiplos usuários)
 let _lastPollHash='';
 async function pollRemote(){
   if(!_gToken||_dirty)return;
@@ -3042,8 +3102,6 @@ function salvarCDMov(){
   let movQty;
 
   if(tipoSel==='ajuste'){
-    // Ajuste: o campo está em caixas (se SKU usa caixas) ou unidades
-    // Converte para unidades antes de comparar com getSkuQtyCD (que retorna unidades)
     const isCxAdj=!!CAIXA[_cdMovSkuNome];
     const novoTotalUnid=isCxAdj?inputVal*CAIXA[_cdMovSkuNome]:inputVal;
     const atual=getSkuQtyCD(_cdMovLoteId,_cdMovSkuId);
@@ -3189,7 +3247,7 @@ initData().then(()=>{
   migrarNomesSour();
   migrarEmTanque();
   renderDashboard();
-  setInterval(pollRemote,120000);
+  // Nota: o setInterval(pollRemote) é iniciado dentro de initDriveData após login bem-sucedido
 });
 </script>
 </body>
