@@ -1112,6 +1112,7 @@ function fmtQtyDisplay(nomesku,unid){
 }
 
 function isLoteEncerrado(lote){
+  if(lote.emTanque)return false; // lote em tanque nunca é encerrado
   if(lote.encerradoEm)return true;
   return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
 }
