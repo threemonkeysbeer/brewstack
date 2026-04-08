@@ -155,7 +155,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
 .hist-row{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--b1)}
 .hist-row:last-child{border-bottom:none}
 .hist-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
-.hist-dot.saida{background:var(--amber)}.hist-dot.entrada{background:var(--green)}.hist-dot.ajuste{background:var(--blue)}
+.hist-dot.saida{background:var(--amber)}.hist-dot.entrada{background:var(--green)}.hist-dot.ajuste{background:var(--blue)}.hist-dot.auditoria{background:var(--blue)}
 .hist-body{flex:1}
 .hist-title{font-size:13px;color:var(--text)}
 .hist-title strong.s{color:var(--amber)}.hist-title strong.e{color:var(--green)}
@@ -386,6 +386,7 @@ tr:hover td{background:rgba(255,255,255,.015)}
     <div class="ftab active" onclick="setHF('todos',this)">Todos</div>
     <div class="ftab" onclick="setHF('saida',this)">Saídas</div>
     <div class="ftab" onclick="setHF('entrada',this)">Entradas</div>
+    <div class="ftab" onclick="setHF('outros',this)">Outros</div>
   </div>
   <div class="card"><div id="hist-list" style="padding:2px 0"></div></div>
 </div>
@@ -797,7 +798,7 @@ const DRIVE_FILE_NAME = 'brewstack-data.json';
 //   3. Abra o arquivo no Drive, copie o ID da URL (trecho entre /d/ e /view)
 //   4. Cole aqui abaixo, substituindo o placeholder
 // ─────────────────────────────────────────────────────────────────────────────
-const SHARED_FILE_ID = '1XzpfIYbNlhuXaKUMbOfhWiofs9yHjf18';
+const SHARED_FILE_ID = 'COLE_O_ID_DO_ARQUIVO_AQUI';
 
 // Scope drive permite ler/escrever arquivos compartilhados pelo Drive (necessário
 // para o arquivo fixo da empresa). drive.file só funciona para arquivos criados
@@ -826,7 +827,7 @@ function showLoading(msg='Carregando...'){
 }
 function hideLoading(){const el=document.getElementById('loading-overlay');if(el)el.style.display='none';}
 
-function emptyData(){return{receitas:[],lotes:[],movs:[],cdMovs:[],insumos:{}};}
+function emptyData(){return{receitas:[],lotes:[],movs:[],cdMovs:[],insumos:{},auditLog:[]};}
 
 // ════════════════════════════════════════════
 // GOOGLE AUTH
@@ -1023,6 +1024,48 @@ async function flushSave(){
   await saveRemote(_cache);
 }
 
+// ════════════════════════════════════════════
+// AUDITORIA & UNDO
+// ════════════════════════════════════════════
+function logAudit(acao, resumo, detalhes){
+  const d=getData();
+  if(!d.auditLog)d.auditLog=[];
+  d.auditLog.unshift({id:uid(),ts:Date.now(),tipo:'auditoria',acao,resumo,detalhes:detalhes||'',usuario:_userEmail||'—'});
+  if(d.auditLog.length>500)d.auditLog.length=500;
+  // d is _cache by reference — caller still calls save(d)
+}
+
+let _undoStack=null; // {data: JSON string, description: string}
+function saveUndo(description){
+  _undoStack={data:JSON.stringify(getData()),description};
+}
+function undo(){
+  if(!_undoStack)return;
+  const restored=JSON.parse(_undoStack.data);
+  const desc=_undoStack.description;
+  _undoStack=null;
+  _cache=restored;
+  localStorage.setItem('bstack3',JSON.stringify(restored));
+  if(_gToken&&_driveFileId){_dirty=true;clearTimeout(_saveTimer);_saveTimer=setTimeout(async()=>{_dirty=false;await saveRemote(_cache);},800);}
+  const active=document.querySelector('.page.active');
+  if(active){const id=active.id.replace('page-','');
+    ({dashboard:renderDashboard,descida:renderDescida,historico:renderHistorico,
+      lotes:renderLotes,tanque:renderTanque,analytics:renderAnalytics,
+      insumos:renderInsumos,cd:renderCD,receitas:renderReceitas})[id]?.();}
+  toast(`↩ "${desc}" desfeito!`,'s');
+}
+function showUndoToast(msg, undoDesc){
+  saveUndo(undoDesc||msg);
+  const w=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className='toast s';
+  el.style.cssText+='display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:280px';
+  el.innerHTML=`<span>${msg}</span><button onclick="undo();this.closest('.toast').remove()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:4px 10px;border-radius:2px;font-family:var(--fm);font-size:10px;cursor:pointer;flex-shrink:0;letter-spacing:.5px">↩ DESFAZER</button>`;
+  w.appendChild(el);
+  let tid=setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),350);},8000);
+  el.querySelector('button').addEventListener('click',()=>clearTimeout(tid));
+}
+
 async function initDriveData(){
   showLoading('Conectando ao arquivo compartilhado...');
   try{
@@ -1140,7 +1183,6 @@ function updateSidebarStatus(){
 }
 
 
-// ── SKU qty ──
 function getSkuQty(loteId,skuId){
   const d=getData();
   const lote=d.lotes.find(l=>l.id===loteId);
@@ -1149,11 +1191,16 @@ function getSkuQty(loteId,skuId){
   const ls=lote.skus.find(s=>s.skuId===skuId);
   const inicial=ls?ls.qty:0;
   let q=inicial;
-  d.movs.filter(m=>m.loteId===loteId&&m.skuId===skuId).forEach(m=>{
-    if(m.tipo==='saida')q-=m.qty;
-    else if(m.tipo==='entrada')q+=m.qty;
-    else q=m.qty;
-  });
+  // Exclui movimentos de CD (local:'cd') — esses são contabilizados em getSkuQtyCD
+  // Ordena por timestamp (mais antigo primeiro) para que ajustes de valor absoluto funcionem corretamente
+  d.movs
+    .filter(m=>m.loteId===loteId&&m.skuId===skuId&&!m.local)
+    .sort((a,b)=>a.ts-b.ts)
+    .forEach(m=>{
+      if(m.tipo==='saida')q-=m.qty;
+      else if(m.tipo==='entrada')q+=m.qty;
+      else q=m.qty; // ajuste legado
+    });
   return Math.max(0,q);
 }
 
@@ -1727,9 +1774,10 @@ function confirmarComDestino(){
   const movs=_pendingMovs.map(m=>({
     ...m,
     destino,
-    obs: destino==='cd'?'Descida da fábrica':'Descida da fábrica',usuario:_userEmail||'—'
+    obs:destino==='cd'?'Descida da fábrica':(outroObs||'Outro destino'),
+    usuario:_userEmail||'—'
   }));
-  // Desconta insumos (caixas)
+  // Desconta insumos (caixas de embalagem usadas nas saídas)
   movs.forEach(m=>{
     const lote=d.lotes.find(l=>l.id===m.loteId);
     const rec=lote?d.receitas.find(r=>r.id===lote.receitaId):null;
@@ -1737,7 +1785,7 @@ function confirmarComDestino(){
     if(sku&&CAIXA[sku.nome]){
       const cxKey=insKeyCaixa(rec.nome,sku.nome);
       const cxQty=Math.floor(m.qty/CAIXA[sku.nome]);
-      if(cxKey&&cxQty>0){if(!d.insumos)d.insumos={};d.insumos[cxKey]=(d.insumos[cxKey]||0)-cxQty;if(d.insumos[cxKey]<0)d.insumos[cxKey]=0;}
+      if(cxKey&&cxQty>0){if(!d.insumos)d.insumos={};d.insumos[cxKey]=Math.max(0,(d.insumos[cxKey]||0)-cxQty);}
     }
   });
   d.movs.unshift(...movs);
@@ -1745,7 +1793,7 @@ function confirmarComDestino(){
   if(destino==='cd'){
     const cdMovs=movs.map(m=>({
       id:uid(),loteId:m.loteId,skuId:m.skuId,tipo:'entrada',local:'cd',
-      qty:m.qty,obs:'Recebido da fábrica',ts:m.ts+1
+      qty:m.qty,obs:'Recebido da fábrica',ts:m.ts+1,usuario:_userEmail||'—'
     }));
     if(!d.cdMovs)d.cdMovs=[];
     d.cdMovs.unshift(...cdMovs);
@@ -1755,8 +1803,17 @@ function confirmarComDestino(){
     const lote=d.lotes.find(l=>l.id===m.loteId);
     if(lote&&!lote.encerradoEm&&isLoteEncerrado(lote))lote.encerradoEm=today();
   });
+  // Audit
+  const resumoDesc=movs.map(m=>{
+    const lote=d.lotes.find(l=>l.id===m.loteId);
+    const rec=lote?d.receitas.find(r=>r.id===lote.receitaId):null;
+    const isCx=!!CAIXA[m.nome];
+    const qStr=isCx?`${Math.floor(m.qty/(CAIXA[m.nome]||1))} cx`:m.qty+' unid';
+    return `${rec?rec.nome:''} ${m.nome} ${qStr}`;
+  }).join(' · ');
+  logAudit('descida',`Descida registrada → ${destino==='cd'?'CD Rio':outroObs||'Outro destino'}`,resumoDesc);
   save(d);closeDestino();clearDescida();renderDescida();renderDashboard();
-  toast(`✅ ${movs.length} saída${movs.length>1?'s':''} registrada${movs.length>1?'s':''}!`,'s');
+  showUndoToast(`✅ ${movs.length} saída${movs.length>1?'s':''} registrada${movs.length>1?'s':''}!`,'Descida');
 }
 
 
@@ -1765,65 +1822,134 @@ function confirmarComDestino(){
 // ════════════════════════════════════════════
 let hf='todos';
 function setHF(f,el){hf=f;document.querySelectorAll('#hist-tabs .ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHistorico();}
+
+// Labels legíveis para ações de auditoria
+const ACAO_LABEL={
+  criacao_lote:'✨ Lote criado',
+  criacao_lote_tanque:'🧪 Lote criado (em tanque)',
+  edicao_lote:'✏️ Lote editado',
+  exclusao_lote:'🗑 Lote excluído',
+  descida:'📤 Descida registrada',
+  mov_sku:'⇅ Movimentação',
+  mov_cd:'🏢 CD movimentação',
+  entrada_cd:'📥 Entrada CD manual',
+  ajuste_insumo:'📦 Ajuste de insumo',
+  entrada_insumos:'📦 Entrada de insumos',
+  criacao_receita:'⚙️ Receita criada',
+  edicao_receita:'⚙️ Receita editada',
+  exclusao_receita:'⚙️ Receita excluída',
+  edicao_mov:'✏️ Movimentação editada',
+  cancelamento_mov:'🚫 Movimentação cancelada',
+};
+
 function renderHistorico(){
   const d=getData();
-  let movs=[...d.movs];
-  if(hf!=='todos')movs=movs.filter(m=>m.tipo===hf);
-  document.getElementById('hist-sub').textContent=`${movs.length} registro${movs.length!==1?'s':''}`;
+  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  // Constrói feed unificado dependendo do filtro
+  let feed=[];
+
+  if(hf==='outros'){
+    // Apenas entradas do auditLog
+    feed=(d.auditLog||[]).map(a=>({...a,_isAudit:true}));
+  } else {
+    // Movimentações de SKU filtradas por tipo
+    let movs=[...d.movs];
+    if(hf==='saida') movs=movs.filter(m=>m.tipo==='saida');
+    else if(hf==='entrada') movs=movs.filter(m=>m.tipo==='entrada');
+    feed=movs.map(m=>({...m,_isAudit:false}));
+  }
+
+  feed.sort((a,b)=>b.ts-a.ts);
+  document.getElementById('hist-sub').textContent=`${feed.length} registro${feed.length!==1?'s':''}`;
   const el=document.getElementById('hist-list');
-  if(!movs.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>Nenhuma movimentação</div>`;return;}
+  if(!feed.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>Nenhum registro</div>`;return;}
+
   const lm={},rm={},sm={};
   d.lotes.forEach(l=>lm[l.id]=l);
   d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
+
   // Agrupa por mês
-  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const grupos={};
-  movs.forEach(m=>{
-    const dt=new Date(m.ts);
+  feed.forEach(item=>{
+    const dt=new Date(item.ts);
     const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-    if(!grupos[key])grupos[key]={label:`${MESES[dt.getMonth()]} ${dt.getFullYear()}`,movs:[]};
-    grupos[key].movs.push(m);
+    if(!grupos[key])grupos[key]={label:`${MESES[dt.getMonth()]} ${dt.getFullYear()}`,items:[]};
+    grupos[key].items.push(item);
   });
+
   const keys=Object.keys(grupos).sort((a,b)=>b.localeCompare(a));
   let html='';
   keys.forEach((key,idx)=>{
     const g=grupos[key];
     const aberto=idx===0;
     const bodyId='hg-'+key;
-    const rowsHtml=g.movs.map(m=>{
+
+    const rowsHtml=g.items.map(item=>{
+      const dt=new Date(item.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+      if(item._isAudit){
+        // Linha de auditoria
+        const label=ACAO_LABEL[item.acao]||('📌 '+item.acao);
+        const usuarioTag=item.usuario&&item.usuario!=='—'
+          ?`<span style="font-family:var(--fm);font-size:9px;color:var(--td);margin-left:6px">${item.usuario}</span>`:'';
+        return`<div class="hist-row">
+          <div class="hist-dot ajuste"></div>
+          <div class="hist-body">
+            <div class="hist-title" style="color:var(--text)">${label}${usuarioTag}</div>
+            <div style="font-size:13px;color:var(--tm);margin-top:2px">${item.resumo}</div>
+            ${item.detalhes?`<div style="font-family:var(--fm);font-size:10px;color:var(--td);margin-top:2px">${item.detalhes}</div>`:''}
+            <div class="hist-meta">${dt}</div>
+          </div>
+        </div>`;
+      }
+
+      // Linha de movimentação normal
+      const m=item;
       const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
-      const dt=new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
       const sc=m.tipo==='saida'?'s':'e';
       const sign=m.tipo==='saida'?'−':'+';
-      let qtyStr=`${sign}${m.qty}`;
+      let qtyStr=`${sign}${m.qty} unid`;
       if(m.tipo==='saida'&&sku&&CAIXA[sku.nome]){const cx=Math.floor(m.qty/CAIXA[sku.nome]);qtyStr=`${sign}${cx} cx`;}
-      // Label de destino para saídas
+      else if(m.tipo==='entrada'&&sku&&CAIXA[sku.nome]){const cx=Math.floor(m.qty/CAIXA[sku.nome]);qtyStr=`${sign}${cx>0?cx+' cx':m.qty+' unid'}`;}
+
       let destinoTag='';
-      if(m.tipo==='saida'){
+      if(m.tipo==='saida'&&!m.local){
         if(m.destino==='cd'||m.obs==='Transferência → CD Rio')
           destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--blue-dim);color:#6cb2e8;padding:1px 6px;border-radius:2px;margin-left:4px">→ CD Rio</span>`;
-        else if(m.destino==='outro'||m.obs?.startsWith('Saída fábrica'))
+        else if(m.destino==='outro'||m.obs?.startsWith('Outro'))
           destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:rgba(255,255,255,.06);color:var(--tm);padding:1px 6px;border-radius:2px;margin-left:4px">Outro destino</span>`;
       }
       if(m.local==='cd'&&m.tipo==='saida')
-        destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--red-dim);color:var(--red);padding:1px 6px;border-radius:2px;margin-left:4px">Saída do CD</span>`;
+        destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--red-dim);color:var(--red);padding:1px 6px;border-radius:2px;margin-left:4px">Saída CD</span>`;
+      if(m.local==='cd'&&m.tipo==='entrada')
+        destinoTag=`<span style="font-family:var(--fm);font-size:9px;background:var(--blue-dim);color:#6cb2e8;padding:1px 6px;border-radius:2px;margin-left:4px">→ CD Rio</span>`;
+
+      const usuarioTag=m.usuario&&m.usuario!=='—'?` · <span style="font-family:var(--fm);font-size:9px;color:var(--td)">${m.usuario}</span>`:'';
+
+      // Oculta botão de edição para entradas de CD (geradas automaticamente)
+      const podeEditar=!m.local||(m.local==='cd'&&m.tipo==='saida');
+      const editBtn=podeEditar
+        ?`<button class="btn-icon" title="Editar" onclick="openEditMov('${m.id}')" style="flex-shrink:0">✏️</button>`:'';
+
       return`<div class="hist-row">
         <div class="hist-dot ${m.tipo}"></div>
         <div class="hist-body">
-          <div class="hist-title"><strong class="${sc}">${qtyStr}</strong> ${rec?rec.nome:''} · ${sku?sku.nome:''}${destinoTag}</div>
-          <div class="hist-meta">${dt} · ${l?l.codigo:'—'}${m.obs?' · '+m.obs:''}${m.usuario&&m.usuario!=='—'?' · <span style="font-family:var(--fm);font-size:9px;color:var(--td)">'+m.usuario+'</span>':''}</div>
+          <div class="hist-title"><strong class="${sc}">${qtyStr}</strong> ${rec?rec.nome:'—'} · ${sku?sku.nome:'—'}${destinoTag}</div>
+          <div class="hist-meta">${dt} · ${l?l.codigo:'—'}${m.obs?' · '+m.obs:''}${usuarioTag}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <div class="hist-qty ${sc}">${qtyStr}</div>
-          <button class="btn-icon" title="Editar" onclick="openEditMov('${m.id}')" style="flex-shrink:0">✏️</button>
+          ${editBtn}
         </div>
       </div>`;
     }).join('');
+
     html+=`<div style="margin-bottom:8px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden">
       <div onclick="toggleHistGrupo('${bodyId}')" style="padding:11px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--s2);user-select:none">
         <div>
           <span style="font-family:var(--fd);font-size:17px;letter-spacing:1px">${g.label}</span>
-          <span style="font-family:var(--fm);font-size:10px;color:var(--tm);margin-left:10px">${g.movs.length} movimentação${g.movs.length!==1?'s':''}</span>
+          <span style="font-family:var(--fm);font-size:10px;color:var(--tm);margin-left:10px">${g.items.length} registro${g.items.length!==1?'s':''}</span>
         </div>
         <span id="arr-${bodyId}" style="color:var(--tm);font-size:13px">${aberto?'▾':'▸'}</span>
       </div>
@@ -2082,12 +2208,14 @@ function _openLoteModal(id,preRecId,forcarTanque){
     }
     document.getElementById('lote-envasado-check').checked=envasado;
     _loteEnvasado=envasado;
-    // Reconstrói as qtds: se em tanque usa qtdEstimada, senão usa movimentações
+    // Reconstrói as qtds: se em tanque usa qtdEstimada, senão soma apenas movimentos de envase original
     const skusComQtd=l.skus.map(ls=>{
       if(!envasado){
         return{skuId:ls.skuId,qty:ls.qtdEstimada||0};
       }
-      const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada');
+      // Lê apenas as entradas de envase original (obs começa com "Entrada - ")
+      // Exclui entradas manuais e entradas de CD para não inflar o valor
+      const entradas=d.movs.filter(m=>m.loteId===l.id&&m.skuId===ls.skuId&&m.tipo==='entrada'&&!m.local&&(m.obs||'').startsWith('Entrada - '));
       const qtdReal=entradas.reduce((acc,m)=>acc+m.qty,0);
       return{skuId:ls.skuId,qty:qtdReal};
     });
@@ -2309,16 +2437,14 @@ function salvarLote(){
   if(!codigo){toast('Informe o código do lote.','e');return;}
   const rec=d.receitas.find(r=>r.id===recId);
   if(!rec)return;
-  const isTanque=!_loteEnvasado; // em tanque = envase NÃO concluído
+  const isTanque=!_loteEnvasado;
   const qtdsDigitadas=rec.skus.map(s=>({skuId:s.id,nome:s.nome,qty:parseInt(document.getElementById('lsku-'+s.id)?.value)||0}));
   const skus=qtdsDigitadas.map(s=>({skuId:s.skuId,qty:0,qtdEstimada:isTanque?s.qty:0}));
-  // Calcula vol envasado (só se envasado)
   let volEnv=0;
   if(!isTanque){
     qtdsDigitadas.forEach(({nome,qty})=>{const ve=VOL_EFETIVO[nome];if(ve!==undefined)volEnv+=ve*qty;});
     volEnv=Math.round(volEnv*10)/10;
   }
-  // Coleta perdas (só se envasado)
   const perdas={};
   if(!isTanque){
     document.querySelectorAll('[id^="perda-"]').forEach(el=>{
@@ -2335,83 +2461,120 @@ function salvarLote(){
     skus,perdas,obs:document.getElementById('lote-obs').value.trim(),
     emTanque:isTanque,
   };
+
   if(editLoteId){
     const idx=d.lotes.findIndex(x=>x.id===editLoteId);
     if(idx>-1){
       const eraBTanque=!!d.lotes[idx].emTanque;
-      d.lotes[idx]={...d.lotes[idx],...loteData};
+      const oldPerdas={...(d.lotes[idx].perdas||{})};
       const loteId=editLoteId;
+
+      // Lê quantidades antigas de envase (apenas entradas "Entrada - ") antes de remover
+      const oldQtds=rec.skus.map(s=>{
+        const ents=d.movs.filter(m=>m.loteId===loteId&&m.skuId===s.id&&m.tipo==='entrada'&&!m.local&&(m.obs||'').startsWith('Entrada - '));
+        return{skuId:s.id,nome:s.nome,qty:ents.reduce((a,m)=>a+m.qty,0)};
+      });
+
+      saveUndo(`Edição do lote ${codigo}`);
+
+      // Atualiza dados do lote
+      d.lotes[idx]={...d.lotes[idx],...loteData};
+
       if(!isTanque){
-        // Envasado (seja novo envasado ou conversão de tanque→envasado)
-        const movsRestantes=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - ')));
-        const novasEntradas=[];
-        qtdsDigitadas.forEach(ls=>{
-          const saidasJaFeitas=d.movs.filter(m=>m.loteId===loteId&&m.skuId===ls.skuId&&m.tipo==='saida').reduce((acc,m)=>acc+m.qty,0);
-          const qtdEntrada=ls.qty+saidasJaFeitas;
-          if(qtdEntrada>0)novasEntradas.push({id:uid(),loteId,skuId:ls.skuId,tipo:'entrada',qty:qtdEntrada,obs:'Entrada - '+codigo,ts:Date.now(),usuario:_userEmail||'—'});
-        });
-        d.movs=[...novasEntradas,...movsRestantes];
-        // Se veio de tanque, desconta insumos agora
-        if(eraBTanque){
-          if(!d.insumos)d.insumos={};
-          _descontarInsumos(d,rec,qtdsDigitadas,perdas,recId,codigo);
+        // Se já era envasado: reverte insumos antigos antes de aplicar novos
+        if(!eraBTanque&&oldQtds.some(q=>q.qty>0)){
+          _ajustarInsumos(d,rec,oldQtds,oldPerdas,recId,-1); // devolve insumos antigos
         }
-        if(d.lotes[idx].encerradoEm&&!isLoteEncerrado(d.lotes[idx])){d.lotes[idx].encerradoEm=null;}
+
+        // Remove entradas de envase antigas e cria novas com as quantidades corretas
+        // Nota: qtdEntrada = exatamente o que o usuário digitou (total envasado)
+        // O getSkuQty calculará: qtdEntrada - saídas = estoque atual — sem adicionar saidasJaFeitas
+        const movsRestantes=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&!m.local&&(m.obs||'').startsWith('Entrada - ')));
+        const novasEntradas=qtdsDigitadas
+          .filter(ls=>ls.qty>0)
+          .map(ls=>({id:uid(),loteId,skuId:ls.skuId,tipo:'entrada',qty:ls.qty,obs:'Entrada - '+codigo,ts:Date.now(),usuario:_userEmail||'—'}));
+        d.movs=[...novasEntradas,...movsRestantes];
+
+        // Aplica insumos com as novas quantidades
+        _ajustarInsumos(d,rec,qtdsDigitadas,perdas,recId,+1);
+
+        if(d.lotes[idx].encerradoEm&&!isLoteEncerrado(d.lotes[idx]))d.lotes[idx].encerradoEm=null;
+
+        const detalheEdit=`${rec.nome} · ${qtdsDigitadas.filter(q=>q.qty>0).map(q=>`${q.nome}: ${q.qty}`).join(' · ')}`;
+        logAudit('edicao_lote',`Lote ${codigo} editado (envase)`,detalheEdit);
       } else {
-        // Continua em tanque: remove entradas se existirem
-        d.movs=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&(m.obs||'').startsWith('Entrada - ')));
+        // Voltou para tanque: remove entradas de envase e devolve insumos se havia
+        d.movs=d.movs.filter(m=>!(m.loteId===loteId&&m.tipo==='entrada'&&!m.local&&(m.obs||'').startsWith('Entrada - ')));
+        if(!eraBTanque&&oldQtds.some(q=>q.qty>0)){
+          _ajustarInsumos(d,rec,oldQtds,oldPerdas,recId,-1);
+        }
+        logAudit('edicao_lote',`Lote ${codigo} movido de volta para Em Tanque`,rec.nome);
       }
+
+      toast('Lote atualizado!','s');
     }
-    toast('Lote atualizado!','s');
   } else {
     loteData.id=uid();loteData.encerradoEm=null;
     d.lotes.push(loteData);
     if(!isTanque){
-      // movimentações de entrada
       qtdsDigitadas.forEach(ls=>{
         if(ls.qty>0)d.movs.unshift({id:uid(),loteId:loteData.id,skuId:ls.skuId,tipo:'entrada',qty:ls.qty,obs:'Entrada - '+codigo,ts:Date.now(),usuario:_userEmail||'—'});
       });
-      if(!d.insumos)d.insumos={};
-      _descontarInsumos(d,rec,qtdsDigitadas,perdas,recId,codigo);
+      _ajustarInsumos(d,rec,qtdsDigitadas,perdas,recId,+1);
     }
+    const detalhe=`${rec.nome} · ${loteData.volTeo}L`+(isTanque?' (Em Tanque)':`· ${qtdsDigitadas.filter(q=>q.qty>0).map(q=>`${q.nome}: ${q.qty}`).join(' · ')}`);
+    logAudit(isTanque?'criacao_lote_tanque':'criacao_lote',`Lote ${codigo} criado`,detalhe);
     toast(isTanque?'Lote em tanque criado!':'Lote criado!','s');
   }
   save(d);closeLote();renderLotes();renderTanque();renderDashboard();
 }
 
-function _descontarInsumos(d,rec,qtdsDigitadas,perdas,recId,codigo){
+// sign = +1 para consumir insumos no envase, -1 para devolver (edição/correção)
+function _ajustarInsumos(d,rec,qtdsDigitadas,perdas,recId,sign){
+  if(!d.insumos)d.insumos={};
   qtdsDigitadas.forEach(({skuId,nome,qty})=>{
-    if(!qty)return;
+    if(!qty||!nome)return;
     const sku=rec.skus.find(s=>s.id===skuId);
+    // Rótulos por cerveja+SKU
     const rk=insKeyRotulo(recId,nome);
-    d.insumos[rk]=(d.insumos[rk]||0)-qty;if(d.insumos[rk]<0)d.insumos[rk]=0;
+    d.insumos[rk]=Math.max(0,(d.insumos[rk]||0)-sign*qty);
+    // Perda de rótulo
     const pk='rotulo_'+nome.replace(/\s/g,'_');
-    if(perdas[pk]){d.insumos[rk]=(d.insumos[rk]||0)-perdas[pk];if(d.insumos[rk]<0)d.insumos[rk]=0;}
+    if(perdas[pk])d.insumos[rk]=Math.max(0,(d.insumos[rk]||0)-sign*perdas[pk]);
+    // Caixas de embalagem
     if(sku&&CAIXA[nome]){
       const cxKey=insKeyCaixa(rec.nome,nome);
-      if(cxKey){const cxQty=Math.floor(qty/CAIXA[nome]);d.insumos[cxKey]=(d.insumos[cxKey]||0)-cxQty;if(d.insumos[cxKey]<0)d.insumos[cxKey]=0;}
+      if(cxKey){const cxQty=Math.floor(qty/CAIXA[nome]);d.insumos[cxKey]=Math.max(0,(d.insumos[cxKey]||0)-sign*cxQty);}
     }
-    if(nome==='Garrafa 500ml'){d.insumos[INS_GARRAFA_500]=(d.insumos[INS_GARRAFA_500]||0)-qty;if(d.insumos[INS_GARRAFA_500]<0)d.insumos[INS_GARRAFA_500]=0;d.insumos[INS_TAMPINHA_GARRAFA]=(d.insumos[INS_TAMPINHA_GARRAFA]||0)-qty;if(d.insumos[INS_TAMPINHA_GARRAFA]<0)d.insumos[INS_TAMPINHA_GARRAFA]=0;}
-    if(nome==='Lata 350ml'){d.insumos[INS_LATA_350]=(d.insumos[INS_LATA_350]||0)-qty;if(d.insumos[INS_LATA_350]<0)d.insumos[INS_LATA_350]=0;}
-    if(nome==='Lata 473ml'){d.insumos[INS_LATA_473]=(d.insumos[INS_LATA_473]||0)-qty;if(d.insumos[INS_LATA_473]<0)d.insumos[INS_LATA_473]=0;}
-    if(nome==='Barril PET 30L'){d.insumos[INS_BARRIL_PET_30]=(d.insumos[INS_BARRIL_PET_30]||0)-qty;if(d.insumos[INS_BARRIL_PET_30]<0)d.insumos[INS_BARRIL_PET_30]=0;}
-    if(nome==='Barril PET 20L'){d.insumos[INS_BARRIL_PET_20]=(d.insumos[INS_BARRIL_PET_20]||0)-qty;if(d.insumos[INS_BARRIL_PET_20]<0)d.insumos[INS_BARRIL_PET_20]=0;}
+    // Vasilhames
+    if(nome==='Garrafa 500ml'){
+      d.insumos[INS_GARRAFA_500]=Math.max(0,(d.insumos[INS_GARRAFA_500]||0)-sign*qty);
+      d.insumos[INS_TAMPINHA_GARRAFA]=Math.max(0,(d.insumos[INS_TAMPINHA_GARRAFA]||0)-sign*qty);
+    }
+    if(nome==='Lata 350ml')d.insumos[INS_LATA_350]=Math.max(0,(d.insumos[INS_LATA_350]||0)-sign*qty);
+    if(nome==='Lata 473ml')d.insumos[INS_LATA_473]=Math.max(0,(d.insumos[INS_LATA_473]||0)-sign*qty);
+    if(nome==='Barril PET 30L')d.insumos[INS_BARRIL_PET_30]=Math.max(0,(d.insumos[INS_BARRIL_PET_30]||0)-sign*qty);
+    if(nome==='Barril PET 20L')d.insumos[INS_BARRIL_PET_20]=Math.max(0,(d.insumos[INS_BARRIL_PET_20]||0)-sign*qty);
   });
-  if(perdas['garrafa']){d.insumos[INS_GARRAFA_500]=(d.insumos[INS_GARRAFA_500]||0)-perdas['garrafa'];if(d.insumos[INS_GARRAFA_500]<0)d.insumos[INS_GARRAFA_500]=0;}
-  if(perdas['tampinha_garrafa']){d.insumos[INS_TAMPINHA_GARRAFA]=(d.insumos[INS_TAMPINHA_GARRAFA]||0)-perdas['tampinha_garrafa'];if(d.insumos[INS_TAMPINHA_GARRAFA]<0)d.insumos[INS_TAMPINHA_GARRAFA]=0;}
-  if(perdas['lata_350']){d.insumos[INS_LATA_350]=(d.insumos[INS_LATA_350]||0)-perdas['lata_350'];if(d.insumos[INS_LATA_350]<0)d.insumos[INS_LATA_350]=0;}
-  if(perdas['lata_473']){d.insumos[INS_LATA_473]=(d.insumos[INS_LATA_473]||0)-perdas['lata_473'];if(d.insumos[INS_LATA_473]<0)d.insumos[INS_LATA_473]=0;}
-  if(perdas['lata_350']){d.insumos[INS_LATA_350]=(d.insumos[INS_LATA_350]||0)-perdas['lata_350'];if(d.insumos[INS_LATA_350]<0)d.insumos[INS_LATA_350]=0;}
-  if(perdas['tampa_lata_350']){d.insumos['unid_tampa_lata_350']=(d.insumos['unid_tampa_lata_350']||0)-perdas['tampa_lata_350'];if(d.insumos['unid_tampa_lata_350']<0)d.insumos['unid_tampa_lata_350']=0;}
+  // Perdas diretas de vasilhames danificados
+  if(perdas['garrafa'])d.insumos[INS_GARRAFA_500]=Math.max(0,(d.insumos[INS_GARRAFA_500]||0)-sign*perdas['garrafa']);
+  if(perdas['tampinha_garrafa'])d.insumos[INS_TAMPINHA_GARRAFA]=Math.max(0,(d.insumos[INS_TAMPINHA_GARRAFA]||0)-sign*perdas['tampinha_garrafa']);
+  if(perdas['lata_350'])d.insumos[INS_LATA_350]=Math.max(0,(d.insumos[INS_LATA_350]||0)-sign*perdas['lata_350']);
+  if(perdas['lata_473'])d.insumos[INS_LATA_473]=Math.max(0,(d.insumos[INS_LATA_473]||0)-sign*perdas['lata_473']);
+  if(perdas['tampa_lata_350'])d.insumos['unid_tampa_lata_350']=Math.max(0,(d.insumos['unid_tampa_lata_350']||0)-sign*perdas['tampa_lata_350']);
 }
 
 function deleteLote(id){
   const d=getData();
   const l=d.lotes.find(x=>x.id===id);
   if(!l||!confirm(`Excluir lote "${l.codigo}"?`))return;
+  const rec=d.receitas.find(r=>r.id===l.receitaId);
+  const detalhe=`${rec?rec.nome:''} · ${l.codigo}`;
+  logAudit('exclusao_lote',`Lote ${l.codigo} excluído`,detalhe);
   d.lotes=d.lotes.filter(x=>x.id!==id);
   d.movs=d.movs.filter(m=>m.loteId!==id);
-  save(d);renderLotes();renderDashboard();toast('Lote excluído.');
+  save(d);renderLotes();renderDashboard();
+  showUndoToast(`🗑 Lote ${l.codigo} excluído`,`Exclusão do lote ${l.codigo}`);
 }
 
 // ════════════════════════════════════════════
@@ -2465,8 +2628,8 @@ function onMovTipo(){
     document.getElementById('mov-qty-lbl').textContent='Caixas';
     document.getElementById('mov-qty-hint').textContent=`1 cx = ${CAIXA[movSkuNome]} unid`;
   } else if(t==='ajuste'){
-    document.getElementById('mov-qty-lbl').textContent='Novo total (unidades)';
-    document.getElementById('mov-qty-hint').textContent='';
+    document.getElementById('mov-qty-lbl').textContent=isCx?'Novo total (caixas)':'Novo total (unidades)';
+    document.getElementById('mov-qty-hint').textContent='Informe o total correto em estoque agora';
   } else {
     document.getElementById('mov-qty-lbl').textContent='Quantidade (unidades)';
     document.getElementById('mov-qty-hint').textContent='';
@@ -2475,21 +2638,36 @@ function onMovTipo(){
 function closeMov(){document.getElementById('ov-mov').classList.remove('open');}
 function salvarMov(){
   const d=getData();
-  const tipo=document.querySelector('input[name="mt"]:checked')?.value||'saida';
+  let tipo=document.querySelector('input[name="mt"]:checked')?.value||'saida';
   const inputVal=parseInt(document.getElementById('mov-qty').value);
   const obs=document.getElementById('mov-obs-f').value.trim();
   if(isNaN(inputVal)||inputVal<0){toast('Quantidade inválida.','e');return;}
   const lote=d.lotes.find(l=>l.id===movLoteId);
   if(!lote)return;
   const isCx=!!CAIXA[movSkuNome];
-  let unids=inputVal;
-  if(tipo==='saida'&&isCx)unids=inputVal*CAIXA[movSkuNome];
-  let movQty=unids;
-  if(tipo==='ajuste'){const atual=getSkuQty(movLoteId,movSkuId);movQty=Math.abs(unids-atual);}
-  d.movs.unshift({id:uid(),loteId:movLoteId,skuId:movSkuId,tipo,qty:movQty,obs,ts:Date.now()});
+  let movQty=inputVal;
+
+  if(tipo==='ajuste'){
+    // Converte o novo total (em caixas se aplicável) para unidades e calcula delta
+    const novoTotalUnid=isCx?inputVal*CAIXA[movSkuNome]:inputVal;
+    const atual=getSkuQty(movLoteId,movSkuId);
+    const diff=novoTotalUnid-atual;
+    if(diff===0){toast('Sem alteração — valor igual ao atual.','e');return;}
+    tipo=diff>0?'entrada':'saida';
+    movQty=Math.abs(diff);
+  } else if(tipo==='saida'&&isCx){
+    movQty=inputVal*CAIXA[movSkuNome];
+  }
+
+  const rec=d.receitas.find(r=>r.id===lote.receitaId);
+  const sku=rec?rec.skus.find(s=>s.id===movSkuId):null;
+  d.movs.unshift({id:uid(),loteId:movLoteId,skuId:movSkuId,tipo,qty:movQty,obs,ts:Date.now(),usuario:_userEmail||'—'});
   if(!lote.encerradoEm&&isLoteEncerrado(lote))lote.encerradoEm=today();
+  const tipoLabel=tipo==='saida'?'Saída':'Entrada';
+  const qStr=isCx?`${Math.round(movQty/CAIXA[movSkuNome])} cx (${movQty} unid)`:String(movQty);
+  logAudit('mov_sku',`${tipoLabel}: ${qStr} ${sku?sku.nome:''}`,`${rec?rec.nome:''} · ${lote.codigo}${obs?' · '+obs:''}`);
   save(d);closeMov();renderLotes();renderDashboard();
-  toast(`${tipo==='saida'?'Saída':tipo==='entrada'?'Entrada':'Ajuste'} registrado!`,'s');
+  toast(`${tipoLabel} registrada!`,'s');
 }
 
 // ════════════════════════════════════════════
@@ -2672,7 +2850,9 @@ function ajusteInsumo(key,nome){
   if(isNaN(v)||v<0){toast('Valor inválido.','e');return;}
   const d=getData();
   if(!d.insumos)d.insumos={};
-  d.insumos[key]=v;save(d);renderInsumos();toast('Insumo atualizado!','s');
+  logAudit('ajuste_insumo',`Ajuste: ${nome} ${atual}→${v}`,`Chave: ${key}`);
+  d.insumos[key]=v;save(d);renderInsumos();
+  showUndoToast(`Insumo "${nome}" ajustado: ${atual}→${v}`,`Ajuste de ${nome}`);
 }
 
 // Modal entrada insumos
@@ -2727,16 +2907,19 @@ function salvarInsEntrada(){
   const d=getData();
   if(!d.insumos)d.insumos={};
   let changed=0;
+  const resumoParts=[];
   document.querySelectorAll('[id^="ins-e-"]').forEach(el=>{
     const v=parseInt(el.value)||0;
     if(!v)return;
     const key=el.id.replace('ins-e-','');
     d.insumos[key]=(d.insumos[key]||0)+v;
+    resumoParts.push(`${key}: +${v}`);
     changed++;
   });
   if(!changed){toast('Nenhum valor informado.','e');return;}
+  logAudit('entrada_insumos',`Entrada de insumos: ${changed} item${changed>1?'ns':''}`,resumoParts.join(' · '));
   save(d);closeInsEntrada();renderInsumos();
-  toast(`✅ ${changed} insumo${changed>1?'s':''} atualizado${changed>1?'s':''}!`,'s');
+  showUndoToast(`✅ ${changed} insumo${changed>1?'s':''} atualizado${changed>1?'s':''}!`,'Entrada de insumos');
 }
 
 // ════════════════════════════════════════════
@@ -2824,13 +3007,14 @@ function salvarEditMov(){
   d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
   const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
   const isCx=m.tipo==='saida'&&sku&&CAIXA[sku.nome];
+  const oldQty=m.qty;
   m.qty=isCx?inputVal*CAIXA[sku.nome]:inputVal;
   m.obs=document.getElementById('edit-mov-obs').value.trim();
-  // Re-verifica encerramento do lote
   if(l&&!l.encerradoEm&&isLoteEncerrado(l)){l.encerradoEm=today();}
   else if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
+  logAudit('edicao_mov',`Movimentação editada: ${sku?sku.nome:''} ${oldQty}→${m.qty} unid`,`${rec?rec.nome:''} · ${l?l.codigo:'—'}`);
   save(d);closeEditMov();renderHistorico();renderDashboard();
-  toast('Movimentação atualizada!','s');
+  showUndoToast('Movimentação atualizada!','Edição de movimentação');
 }
 
 function cancelarMov(){
@@ -2839,14 +3023,16 @@ function cancelarMov(){
   const idx=d.movs.findIndex(x=>x.id===_editMovId);
   if(idx>-1){
     const m=d.movs[idx];
-    const lm={};d.lotes.forEach(l=>lm[l.id]=l);
-    const l=lm[m.loteId];
+    const lm={},rm={},sm={};
+    d.lotes.forEach(l=>lm[l.id]=l);
+    d.receitas.forEach(r=>{rm[r.id]=r;r.skus.forEach(s=>sm[r.id+'_'+s.id]=s);});
+    const l=lm[m.loteId],rec=l?rm[l.receitaId]:null,sku=rec?sm[rec.id+'_'+m.skuId]:null;
+    logAudit('cancelamento_mov',`Movimentação cancelada: ${m.tipo} ${m.qty} unid ${sku?sku.nome:''}`,`${rec?rec.nome:''} · ${l?l.codigo:'—'}`);
     d.movs.splice(idx,1);
-    // Re-verifica encerramento
     if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
   }
   save(d);closeEditMov();renderHistorico();renderDashboard();
-  toast('Movimentação cancelada.','s');
+  showUndoToast('Movimentação cancelada','Cancelamento de movimentação');
 }
 
 function closeReceita(){document.getElementById('ov-receita').classList.remove('open');}
@@ -2879,8 +3065,21 @@ function salvarReceita(){
   const checked=SKU_TIPOS_PADRAO.filter(s=>document.getElementById('rsk-'+s.id)?.checked);
   const skus=[...checked,...customSKUs];
   if(!skus.length){toast('Selecione ao menos um SKU.','e');return;}
-  if(editRecId){const r=d.receitas.find(x=>x.id===editRecId);if(r){r.nome=nome;r.skus=skus;}toast('Atualizado!','s');}
-  else{d.receitas.push({id:uid(),nome,skus});toast('Receita criada!','s');}
+  if(editRecId){
+    const r=d.receitas.find(x=>x.id===editRecId);
+    if(r){
+      saveUndo(`Edição da receita ${r.nome}`);
+      const detalhe=`Nome: ${r.nome}→${nome} · SKUs: ${skus.map(s=>s.nome).join(', ')}`;
+      logAudit('edicao_receita',`Receita "${nome}" editada`,detalhe);
+      r.nome=nome;r.skus=skus;
+    }
+    toast('Atualizado!','s');
+  } else {
+    const newRec={id:uid(),nome,skus};
+    d.receitas.push(newRec);
+    logAudit('criacao_receita',`Receita "${nome}" criada`,`SKUs: ${skus.map(s=>s.nome).join(', ')}`);
+    toast('Receita criada!','s');
+  }
   save(d);closeReceita();renderReceitas();
 }
 function deleteReceita(id){
@@ -2889,10 +3088,12 @@ function deleteReceita(id){
   if(!r)return;
   const lts=d.lotes.filter(l=>l.receitaId===id);
   if(!confirm(`Excluir "${r.nome}"?${lts.length?` ${lts.length} lote(s) também serão excluídos.`:''}`))return;
+  logAudit('exclusao_receita',`Receita "${r.nome}" excluída`,`${lts.length} lote(s) removidos`);
   d.receitas=d.receitas.filter(x=>x.id!==id);
   lts.forEach(l=>{d.movs=d.movs.filter(m=>m.loteId!==l.id);});
   d.lotes=d.lotes.filter(l=>l.receitaId!==id);
-  save(d);renderReceitas();renderDashboard();toast('Excluída.');
+  save(d);renderReceitas();renderDashboard();
+  showUndoToast(`Receita "${r.nome}" excluída`,`Exclusão da receita ${r.nome}`);
 }
 
 // ════════════════════════════════════════════
@@ -3121,14 +3322,21 @@ function salvarCDMov(){
   else if(tipoSel==='ajuste') obsTexto='Ajuste CD'+(obs?' — '+obs:'');
   else obsTexto=obs||'Entrada CD';
 
+  const lote=d.lotes.find(l=>l.id===_cdMovLoteId);
+  const rec=lote?d.receitas.find(r=>r.id===lote.receitaId):null;
+  const sku=rec?rec.skus.find(s=>s.id===_cdMovSkuId):null;
+  const isCxLog=!!CAIXA[_cdMovSkuNome];
+  const qStrLog=isCxLog?`${Math.round(movQty/CAIXA[_cdMovSkuNome])} cx (${movQty} unid)`:String(movQty);
+  logAudit('mov_cd',`CD ${tipoSel==='saida'?'Venda':tipoSel==='ajuste'?'Ajuste':'Entrada'}: ${qStrLog} ${sku?sku.nome:''}`,`${rec?rec.nome:''} · ${lote?lote.codigo:''}`);
+
   // Histórico geral
   const movGeral={id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,local:'cd',
     qty:movQty,obs:obsTexto,ts:Date.now(),usuario:_userEmail||'—'};
   d.movs.unshift(movGeral);
   // cdMovs
-  d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,qty:movQty,obs:obsTexto,ts:Date.now()});
+  d.cdMovs.unshift({id:uid(),loteId:_cdMovLoteId,skuId:_cdMovSkuId,tipo,qty:movQty,obs:obsTexto,ts:Date.now(),usuario:_userEmail||'—'});
   save(d);closeCDMov();renderCD();renderDashboard();
-  toast(`${tipoSel==='saida'?'Venda':tipoSel==='ajuste'?'Ajuste':'Entrada'} registrada no CD!`,'s');
+  showUndoToast(`${tipoSel==='saida'?'Venda':tipoSel==='ajuste'?'Ajuste':'Entrada'} registrada no CD!`,`${tipoSel} CD`);
 }
 
 // ── CD Entrada Manual ──
@@ -3187,19 +3395,20 @@ function salvarCDEntrada(){
   const lote=d.lotes.find(l=>l.id===loteId);
   if(!rec||!lote)return;
   let count=0;
+  const resumoParts=[];
   rec.skus.forEach(s=>{
     const v=parseInt(document.getElementById('cdent-'+s.id)?.value)||0;
     if(!v)return;
     const unids=CAIXA[s.nome]?v*CAIXA[s.nome]:v;
-    // entrada no cdMovs
     d.cdMovs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
-    // entrada no histórico geral
     d.movs.unshift({id:uid(),loteId,skuId:s.id,tipo:'entrada',local:'cd',qty:unids,obs,ts:Date.now(),usuario:_userEmail||'—'});
+    resumoParts.push(`${s.nome}: ${v}${CAIXA[s.nome]?' cx':' unid'}`);
     count++;
   });
   if(!count){toast('Informe ao menos uma quantidade.','e');return;}
+  logAudit('entrada_cd',`Entrada manual CD: ${rec.nome} · ${lote.codigo}`,resumoParts.join(' · '));
   save(d);closeCDEntrada();renderCD();renderDashboard();
-  toast(`✅ ${count} SKU${count>1?'s':''} adicionado${count>1?'s':''} ao CD!`,'s');
+  showUndoToast(`✅ ${count} SKU${count>1?'s':''} adicionado${count>1?'s':''} ao CD!`,'Entrada manual CD');
 }
 
 // (Setup wizard removido — substituído por Google OAuth)
