@@ -790,7 +790,7 @@ const GOOG_CLIENT_ID = '970026253459-c81mcdk0cna10vfsltposgdmf2t7ms3n.apps.googl
 const ALLOWED_DOMAIN = 'threemonkeysbeer.com';
 const DRIVE_FILE_NAME = 'brewstack-data.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
-const SHARED_FILE_ID = '1XzpfIYbNlhuXaKUMbOfhWiofs9yHjf18'; // arquivo compartilhado da empresa
+const SHARED_FILE_ID = '1XzpfIYbNlhuXaKUMbOfhWiofs9yHjf18';
 
 let _cache = null;
 let _dirty = false;
@@ -893,7 +893,6 @@ async function silentRefreshToken(){
 // GOOGLE DRIVE: ler e salvar
 // ════════════════════════════════════════════
 async function findOrCreateDriveFile(){
-  // Usa arquivo único compartilhado da empresa (mesmo dado para todos os usuários)
   _driveFileId=SHARED_FILE_ID;
   try{
     const check=await fetch(
@@ -901,12 +900,12 @@ async function findOrCreateDriveFile(){
       {headers:{Authorization:'Bearer '+_gToken}}
     );
     if(!check.ok){
-      toast('Erro ao acessar arquivo compartilhado. Verifique as permissões.','e');
+      toast('Sem acesso ao arquivo compartilhado. Verifique permissões.','e');
       return false;
     }
-    return true; // arquivo existe e acessível
+    return true;
   }catch(e){
-    toast('Erro de conexão ao acessar Drive.','e');
+    toast('Erro de conexão ao Drive.','e');
     return false;
   }
 }
@@ -953,17 +952,17 @@ function save(d){
   _saveTimer=setTimeout(async()=>{
     if(!_dirty)return;
     _dirty=false;
-    // Merge: carrega versão remota e une movimentações de outros usuários
     try{
+      // Merge: une movimentações de outros usuários antes de salvar
       const latest=await loadRemote();
       if(latest&&latest.receitas){
         const myMovIds=new Set((_cache.movs||[]).map(m=>m.id));
         const myCdIds=new Set((_cache.cdMovs||[]).map(m=>m.id));
         const movsExtras=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
-        const cdMovsExtras=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
-        if(movsExtras.length||cdMovsExtras.length){
+        const cdExtras=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
+        if(movsExtras.length||cdExtras.length){
           _cache.movs=[...(_cache.movs||[]),...movsExtras].sort((a,b)=>b.ts-a.ts);
-          _cache.cdMovs=[...(_cache.cdMovs||[]),...cdMovsExtras].sort((a,b)=>b.ts-a.ts);
+          _cache.cdMovs=[...(_cache.cdMovs||[]),...cdExtras].sort((a,b)=>b.ts-a.ts);
           localStorage.setItem('bstack3',JSON.stringify(_cache));
         }
       }
@@ -981,37 +980,55 @@ async function flushSave(){
 async function initDriveData(){
   showLoading('Conectando ao Google Drive...');
   try{
-    const isExisting=await findOrCreateDriveFile();
-    if(isExisting){
-      showLoading('Carregando dados...');
-      const remote=await loadRemote();
-      if(remote&&remote.receitas&&remote.receitas.length>0){
-        _cache=remote;
-        localStorage.setItem('bstack3',JSON.stringify(_cache));
-        hideLoading();renderDashboard();setInterval(pollRemote,30000);return;
-      }
+    const fileOk=await findOrCreateDriveFile();
+    if(!fileOk){
+      // Arquivo não acessível — usa localStorage como fallback, não sobrescreve Drive
+      try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
+      catch(e){_cache=emptyData();}
+      seedIfEmpty();hideLoading();
+      toast('Usando dados locais. Verifique a conexão.','e');
+      renderDashboard();return;
     }
-    // Arquivo novo ou vazio: tenta migrar do localStorage
+
+    showLoading('Carregando dados da equipe...');
+    const remote=await loadRemote();
+
+    if(remote&&remote.receitas&&remote.receitas.length>0){
+      // Drive tem dados — usa eles como fonte da verdade
+      _cache=remote;
+      localStorage.setItem('bstack3',JSON.stringify(_cache));
+      hideLoading();renderDashboard();setInterval(pollRemote,30000);return;
+    }
+
+    // Drive acessível mas arquivo vazio — única situação onde migramos localStorage
+    // (primeira vez que alguém sobe os dados para o arquivo compartilhado)
     const local=localStorage.getItem('bstack3');
     if(local){
       try{
-        _cache=JSON.parse(local);
-        if(_cache&&_cache.receitas&&_cache.receitas.length>0){
-          showLoading('Migrando dados para o Drive...');
+        const localData=JSON.parse(local);
+        if(localData&&localData.receitas&&localData.receitas.length>0){
+          showLoading('Subindo dados locais para o Drive compartilhado...');
+          _cache=localData;
           await saveRemote(_cache);
           hideLoading();
-          toast('Dados migrados para o Google Drive!','s');
+          toast('Dados sincronizados com o Drive da equipe!','s');
           renderDashboard();setInterval(pollRemote,30000);return;
         }
       }catch(e){}
     }
-    // Tudo novo: seed
+
+    // Arquivo vazio e sem localStorage — banco novo
     _cache=emptyData();seedIfEmpty();
     await saveRemote(_cache);
     hideLoading();renderDashboard();setInterval(pollRemote,30000);
+
   }catch(e){
     hideLoading();
-    toast('Erro ao acessar Drive: '+e.message,'e');
+    // Em caso de erro inesperado, usa localStorage sem sobrescrever o Drive
+    try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
+    catch(e2){_cache=emptyData();}
+    seedIfEmpty();renderDashboard();
+    toast('Erro ao conectar ao Drive. Usando dados locais.','e');
   }
 }
 
