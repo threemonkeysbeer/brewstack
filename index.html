@@ -789,8 +789,7 @@ function fmtDate(s){if(!s)return'—';return new Date(s).toLocaleDateString('pt-
 const GOOG_CLIENT_ID = '970026253459-c81mcdk0cna10vfsltposgdmf2t7ms3n.apps.googleusercontent.com';
 const ALLOWED_DOMAIN = 'threemonkeysbeer.com';
 const DRIVE_FILE_NAME = 'brewstack-data.json';
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
-const SHARED_FILE_ID = '1XzpfIYbNlhuXaKUMbOfhWiofs9yHjf18';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
 let _cache = null;
 let _dirty = false;
@@ -893,21 +892,23 @@ async function silentRefreshToken(){
 // GOOGLE DRIVE: ler e salvar
 // ════════════════════════════════════════════
 async function findOrCreateDriveFile(){
-  _driveFileId=SHARED_FILE_ID;
-  try{
-    const check=await fetch(
-      `https://www.googleapis.com/drive/v3/files/${_driveFileId}?fields=id`,
-      {headers:{Authorization:'Bearer '+_gToken}}
-    );
-    if(!check.ok){
-      toast('Sem acesso ao arquivo compartilhado. Verifique permissões.','e');
-      return false;
-    }
-    return true;
-  }catch(e){
-    toast('Erro de conexão ao Drive.','e');
-    return false;
-  }
+  // Busca arquivo existente no appDataFolder
+  const search=await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${DRIVE_FILE_NAME}'&fields=files(id,name)`,
+    {headers:{Authorization:'Bearer '+_gToken}}
+  );
+  const sj=await search.json();
+  if(sj.files&&sj.files.length>0){_driveFileId=sj.files[0].id;return true;}
+  // Cria arquivo novo
+  const meta={name:DRIVE_FILE_NAME,parents:['appDataFolder']};
+  const form=new FormData();
+  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('file',new Blob([JSON.stringify(emptyData())],{type:'application/json'}));
+  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    {method:'POST',headers:{Authorization:'Bearer '+_gToken},body:form});
+  const cj=await cr.json();
+  _driveFileId=cj.id;
+  return false; // false = arquivo novo (sem dados)
 }
 
 async function ensureAuth(){
@@ -952,21 +953,24 @@ function save(d){
   _saveTimer=setTimeout(async()=>{
     if(!_dirty)return;
     _dirty=false;
-    try{
-      // Merge: une movimentações de outros usuários antes de salvar
-      const latest=await loadRemote();
-      if(latest&&latest.receitas){
+    // Merge: carrega versão mais recente antes de salvar
+    const latest=await loadRemote();
+    if(latest&&latest.receitas){
+      // Usa a versão local (mais recente para este usuário) mas mantém movs mais completos
+      const localMovCount=((_cache.movs||[]).length)+(_cache.cdMovs||[]).length;
+      const remoteMovCount=((latest.movs||[]).length)+(latest.cdMovs||[]).length;
+      if(remoteMovCount>localMovCount){
+        // Outro usuário adicionou movs — faz merge simples de movs
         const myMovIds=new Set((_cache.movs||[]).map(m=>m.id));
         const myCdIds=new Set((_cache.cdMovs||[]).map(m=>m.id));
-        const movsExtras=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
-        const cdExtras=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
-        if(movsExtras.length||cdExtras.length){
-          _cache.movs=[...(_cache.movs||[]),...movsExtras].sort((a,b)=>b.ts-a.ts);
-          _cache.cdMovs=[...(_cache.cdMovs||[]),...cdExtras].sort((a,b)=>b.ts-a.ts);
-          localStorage.setItem('bstack3',JSON.stringify(_cache));
+        const novaMovs=(latest.movs||[]).filter(m=>!myMovIds.has(m.id));
+        const novaCdMovs=(latest.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
+        if(novaMovs.length||novaCdMovs.length){
+          _cache.movs=[...(_cache.movs||[]),...novaMovs];
+          _cache.cdMovs=[...(_cache.cdMovs||[]),...novaCdMovs];
         }
       }
-    }catch(e){console.warn('merge pre-save falhou:',e);}
+    }
     await saveRemote(_cache);
   },800);
 }
@@ -980,55 +984,37 @@ async function flushSave(){
 async function initDriveData(){
   showLoading('Conectando ao Google Drive...');
   try{
-    const fileOk=await findOrCreateDriveFile();
-    if(!fileOk){
-      // Arquivo não acessível — usa localStorage como fallback, não sobrescreve Drive
-      try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
-      catch(e){_cache=emptyData();}
-      seedIfEmpty();hideLoading();
-      toast('Usando dados locais. Verifique a conexão.','e');
-      renderDashboard();return;
+    const isExisting=await findOrCreateDriveFile();
+    if(isExisting){
+      showLoading('Carregando dados...');
+      const remote=await loadRemote();
+      if(remote&&remote.receitas&&remote.receitas.length>0){
+        _cache=remote;
+        localStorage.setItem('bstack3',JSON.stringify(_cache));
+        hideLoading();renderDashboard();setInterval(pollRemote,120000);return;
+      }
     }
-
-    showLoading('Carregando dados da equipe...');
-    const remote=await loadRemote();
-
-    if(remote&&remote.receitas&&remote.receitas.length>0){
-      // Drive tem dados — usa eles como fonte da verdade
-      _cache=remote;
-      localStorage.setItem('bstack3',JSON.stringify(_cache));
-      hideLoading();renderDashboard();setInterval(pollRemote,30000);return;
-    }
-
-    // Drive acessível mas arquivo vazio — única situação onde migramos localStorage
-    // (primeira vez que alguém sobe os dados para o arquivo compartilhado)
+    // Arquivo novo ou vazio: tenta migrar do localStorage
     const local=localStorage.getItem('bstack3');
     if(local){
       try{
-        const localData=JSON.parse(local);
-        if(localData&&localData.receitas&&localData.receitas.length>0){
-          showLoading('Subindo dados locais para o Drive compartilhado...');
-          _cache=localData;
+        _cache=JSON.parse(local);
+        if(_cache&&_cache.receitas&&_cache.receitas.length>0){
+          showLoading('Migrando dados para o Drive...');
           await saveRemote(_cache);
           hideLoading();
-          toast('Dados sincronizados com o Drive da equipe!','s');
-          renderDashboard();setInterval(pollRemote,30000);return;
+          toast('Dados migrados para o Google Drive!','s');
+          renderDashboard();setInterval(pollRemote,120000);return;
         }
       }catch(e){}
     }
-
-    // Arquivo vazio e sem localStorage — banco novo
+    // Tudo novo: seed
     _cache=emptyData();seedIfEmpty();
     await saveRemote(_cache);
-    hideLoading();renderDashboard();setInterval(pollRemote,30000);
-
+    hideLoading();renderDashboard();setInterval(pollRemote,120000);
   }catch(e){
     hideLoading();
-    // Em caso de erro inesperado, usa localStorage sem sobrescrever o Drive
-    try{_cache=JSON.parse(localStorage.getItem('bstack3')||'null')||emptyData();}
-    catch(e2){_cache=emptyData();}
-    seedIfEmpty();renderDashboard();
-    toast('Erro ao conectar ao Drive. Usando dados locais.','e');
+    toast('Erro ao acessar Drive: '+e.message,'e');
   }
 }
 
@@ -1099,7 +1085,7 @@ function getSkuQty(loteId,skuId){
   const d=getData();
   const lote=d.lotes.find(l=>l.id===loteId);
   if(!lote)return 0;
-  if(lote.emTanque)return 0; // lotes em tanque não entram no estoque
+  if(lote.emTanque===true)return 0; // lotes em tanque não entram no estoque
   const ls=lote.skus.find(s=>s.skuId===skuId);
   const inicial=ls?ls.qty:0;
   let q=inicial;
@@ -1126,6 +1112,7 @@ function fmtQtyDisplay(nomesku,unid){
 }
 
 function isLoteEncerrado(lote){
+  if(lote.emTanque===true)return false; // em tanque nunca é encerrado
   if(lote.encerradoEm)return true;
   return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
 }
@@ -1295,7 +1282,7 @@ function renderDashboard(){
   migrarEmTanque();
   renderDashTable();renderDashValidade();renderDashCDTable();
   // Update tanque badge
-  const nTanque=(d.lotes||[]).filter(l=>l.emTanque&&!isLoteEncerrado(l)).length;
+  const nTanque=(d.lotes||[]).filter(l=>l.emTanque===true&&!isLoteEncerrado(l)).length;
   const bt=document.getElementById('badge-tanque');if(bt){bt.textContent=nTanque;bt.style.display=nTanque>0?'':'none';}
   const selCD=document.getElementById('dash-filter-cd');
   if(selCD){const curCD=selCD.value;selCD.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===curCD?' selected':''}>${r.nome}</option>`).join('');}
@@ -1945,7 +1932,7 @@ function renderLoteCard(l,d,rec){
       <span class="lote-sku-name">${nome}</span>
       <span class="lote-sku-qty ${qty===0?'':'ok'}" style="${qty===0?'color:var(--td)':''}">${q.principal}${CAIXA[nome]?' cx':''}</span>
       ${subLabel?`<span class="lote-sku-sub">${subLabel}</span>`:''}
-      ${l.emTanque?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
+      ${l.emTanque===true?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
     </div>`;
   }).join('');
   // perdas
@@ -1959,7 +1946,7 @@ function renderLoteCard(l,d,rec){
       <div>
         <div class="lote-id">${l.codigo}</div>
         <div class="lote-meta">Prod. ${fmtDate(l.dtProd)} · Envase ${fmtDate(l.dtEnv)}${l.obs?' · '+l.obs:''}</div>
-        <div style="margin-top:5px">${l.emTanque?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
+        <div style="margin-top:5px">${l.emTanque===true?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
       </div>
       <div style="display:flex;gap:5px">
         <button class="btn-icon" title="Editar" onclick="openLoteModal('${l.id}')">✏️</button>
@@ -3185,7 +3172,7 @@ initData().then(()=>{
   migrarNomesSour();
   migrarEmTanque();
   renderDashboard();
-  setInterval(pollRemote,30000);
+  setInterval(pollRemote,120000);
 });
 </script>
 </body>
