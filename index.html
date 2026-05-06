@@ -981,40 +981,75 @@ async function flushSave(){
   await saveRemote(_cache);
 }
 
+// Retorna o timestamp da movimentação mais recente nos dados
+function _latestMovTs(data){
+  if(!data)return 0;
+  const all=[...(data.movs||[]),...(data.cdMovs||[])];
+  return all.reduce((max,m)=>m.ts>max?m.ts:max,0);
+}
+
 async function initDriveData(){
   showLoading('Conectando ao Google Drive...');
   try{
-    const isExisting=await findOrCreateDriveFile();
-    if(isExisting){
-      showLoading('Carregando dados...');
-      const remote=await loadRemote();
-      if(remote&&remote.receitas&&remote.receitas.length>0){
+    const fileOk=await findOrCreateDriveFile();
+
+    // Lê dados locais primeiro (referência para comparação)
+    let localData=null;
+    try{const raw=localStorage.getItem('bstack3');if(raw)localData=JSON.parse(raw);}catch(e){}
+
+    if(!fileOk){
+      // Drive inacessível — usa local sem sobrescrever
+      _cache=localData||emptyData();
+      seedIfEmpty();hideLoading();
+      toast('Drive inacessível. Usando dados locais.','e');
+      renderDashboard();return;
+    }
+
+    showLoading('Carregando dados da equipe...');
+    const remote=await loadRemote();
+
+    const remoteTs=_latestMovTs(remote);
+    const localTs=_latestMovTs(localData);
+
+    if(remote&&remote.receitas&&remote.receitas.length>0){
+      if(localData&&localTs>remoteTs){
+        // Local é mais recente — sobe para o Drive (recuperação de dados)
+        showLoading('Sincronizando dados mais recentes...');
+        _cache=localData;
+        await saveRemote(_cache);
+        hideLoading();
+        toast('Dados locais mais recentes sincronizados com o Drive!','s');
+      } else {
+        // Drive é mais recente ou igual — usa Drive
         _cache=remote;
         localStorage.setItem('bstack3',JSON.stringify(_cache));
-        hideLoading();renderDashboard();setInterval(pollRemote,120000);return;
+        hideLoading();
       }
+      renderDashboard();setInterval(pollRemote,30000);return;
     }
-    // Arquivo novo ou vazio: tenta migrar do localStorage
-    const local=localStorage.getItem('bstack3');
-    if(local){
-      try{
-        _cache=JSON.parse(local);
-        if(_cache&&_cache.receitas&&_cache.receitas.length>0){
-          showLoading('Migrando dados para o Drive...');
-          await saveRemote(_cache);
-          hideLoading();
-          toast('Dados migrados para o Google Drive!','s');
-          renderDashboard();setInterval(pollRemote,120000);return;
-        }
-      }catch(e){}
+
+    // Drive vazio — sobe dados locais se existirem
+    if(localData&&localData.receitas&&localData.receitas.length>0){
+      showLoading('Subindo dados locais para o Drive...');
+      _cache=localData;
+      await saveRemote(_cache);
+      hideLoading();
+      toast('Dados sincronizados com o Drive!','s');
+      renderDashboard();setInterval(pollRemote,30000);return;
     }
-    // Tudo novo: seed
+
+    // Tudo novo
     _cache=emptyData();seedIfEmpty();
     await saveRemote(_cache);
-    hideLoading();renderDashboard();setInterval(pollRemote,120000);
+    hideLoading();renderDashboard();setInterval(pollRemote,30000);
+
   }catch(e){
     hideLoading();
-    toast('Erro ao acessar Drive: '+e.message,'e');
+    let localData=null;
+    try{const raw=localStorage.getItem('bstack3');if(raw)localData=JSON.parse(raw);}catch(e2){}
+    _cache=localData||emptyData();
+    seedIfEmpty();renderDashboard();
+    toast('Erro ao conectar ao Drive. Usando dados locais.','e');
   }
 }
 
@@ -1068,11 +1103,25 @@ async function pollRemote(){
   }catch(e){}
 }
 
+async function forcarSincLocal(){
+  const localData=JSON.parse(localStorage.getItem('bstack3')||'null');
+  if(!localData||!localData.receitas){toast('Nenhum dado local encontrado.','e');return;}
+  const localTs=_latestMovTs(localData);
+  const localDt=localTs?new Date(localTs).toLocaleString('pt-BR'):'sem data';
+  if(!confirm(`Substituir os dados do Drive pelos dados locais deste navegador?\n\nÚltima movimentação local: ${localDt}\n\nEssa ação não pode ser desfeita.`))return;
+  showLoading('Subindo dados locais para o Drive...');
+  _cache=localData;
+  await saveRemote(_cache);
+  hideLoading();
+  toast('Dados locais enviados para o Drive!','s');
+  renderDashboard();
+}
+
 function updateSidebarStatus(){
   const el=document.getElementById('sidebar-foot-status');
   if(!el)return;
   if(_userEmail){
-    el.innerHTML=`☁️ Drive ativo<br><span style="font-family:var(--fm);font-size:9px;color:var(--tm)">${_userEmail}</span>`;
+    el.innerHTML=`☁️ Drive ativo<br><span style="font-family:var(--fm);font-size:9px;color:var(--tm)">${_userEmail}</span><br><span style="font-family:var(--fm);font-size:9px;color:var(--td);cursor:pointer;text-decoration:underline" onclick="forcarSincLocal()">↑ forçar sinc. local→Drive</span>`;
     el.style.cursor='default';
   } else {
     el.innerHTML='Dados locais<br><span style="font-family:var(--fm);font-size:9px;color:var(--amber);cursor:pointer" onclick="showLoginScreen()">▸ Entrar com Google</span>';
@@ -1085,7 +1134,7 @@ function getSkuQty(loteId,skuId){
   const d=getData();
   const lote=d.lotes.find(l=>l.id===loteId);
   if(!lote)return 0;
-  if(lote.emTanque===true)return 0; // lotes em tanque não entram no estoque
+  if(lote.emTanque)return 0; // lotes em tanque não entram no estoque
   const ls=lote.skus.find(s=>s.skuId===skuId);
   const inicial=ls?ls.qty:0;
   let q=inicial;
@@ -1112,7 +1161,6 @@ function fmtQtyDisplay(nomesku,unid){
 }
 
 function isLoteEncerrado(lote){
-  if(lote.emTanque===true)return false; // em tanque nunca é encerrado
   if(lote.encerradoEm)return true;
   return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
 }
@@ -1282,7 +1330,7 @@ function renderDashboard(){
   migrarEmTanque();
   renderDashTable();renderDashValidade();renderDashCDTable();
   // Update tanque badge
-  const nTanque=(d.lotes||[]).filter(l=>l.emTanque===true&&!isLoteEncerrado(l)).length;
+  const nTanque=(d.lotes||[]).filter(l=>l.emTanque&&!isLoteEncerrado(l)).length;
   const bt=document.getElementById('badge-tanque');if(bt){bt.textContent=nTanque;bt.style.display=nTanque>0?'':'none';}
   const selCD=document.getElementById('dash-filter-cd');
   if(selCD){const curCD=selCD.value;selCD.innerHTML='<option value="">Todas</option>'+[...d.receitas].sort((a,b)=>a.nome.localeCompare(b.nome)).map(r=>`<option value="${r.id}"${r.id===curCD?' selected':''}>${r.nome}</option>`).join('');}
@@ -1932,7 +1980,7 @@ function renderLoteCard(l,d,rec){
       <span class="lote-sku-name">${nome}</span>
       <span class="lote-sku-qty ${qty===0?'':'ok'}" style="${qty===0?'color:var(--td)':''}">${q.principal}${CAIXA[nome]?' cx':''}</span>
       ${subLabel?`<span class="lote-sku-sub">${subLabel}</span>`:''}
-      ${l.emTanque===true?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
+      ${l.emTanque?'':`<button class="btn-icon" title="Movimentação" onclick="openMovModal('${l.id}','${ls.skuId}')">⇅</button>`}
     </div>`;
   }).join('');
   // perdas
@@ -1946,7 +1994,7 @@ function renderLoteCard(l,d,rec){
       <div>
         <div class="lote-id">${l.codigo}</div>
         <div class="lote-meta">Prod. ${fmtDate(l.dtProd)} · Envase ${fmtDate(l.dtEnv)}${l.obs?' · '+l.obs:''}</div>
-        <div style="margin-top:5px">${l.emTanque===true?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
+        <div style="margin-top:5px">${l.emTanque?'<span class="badge" style="background:var(--amber-dim);color:var(--amber)">🧪 Em Tanque</span>':(enc?'<span class="badge bg-enc">Encerrado</span>':'<span class="badge bg-ativo">Ativo</span>')}</div>
       </div>
       <div style="display:flex;gap:5px">
         <button class="btn-icon" title="Editar" onclick="openLoteModal('${l.id}')">✏️</button>
