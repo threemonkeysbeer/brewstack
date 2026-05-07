@@ -981,6 +981,12 @@ async function flushSave(){
   await saveRemote(_cache);
 }
 
+function _latestMovTs(data){
+  if(!data)return 0;
+  const all=[...(data.movs||[]),...(data.cdMovs||[])];
+  return all.reduce((max,m)=>m.ts>max?m.ts:max,0);
+}
+
 async function initDriveData(){
   showLoading('Conectando ao Google Drive...');
   try{
