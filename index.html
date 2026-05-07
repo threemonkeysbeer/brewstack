@@ -981,54 +981,35 @@ async function flushSave(){
   await saveRemote(_cache);
 }
 
-// Retorna o timestamp da movimentação mais recente nos dados
-function _latestMovTs(data){
-  if(!data)return 0;
-  const all=[...(data.movs||[]),...(data.cdMovs||[])];
-  return all.reduce((max,m)=>m.ts>max?m.ts:max,0);
-}
-
 async function initDriveData(){
   showLoading('Conectando ao Google Drive...');
   try{
     const fileOk=await findOrCreateDriveFile();
-
-    // Lê dados locais primeiro (referência para comparação)
     let localData=null;
     try{const raw=localStorage.getItem('bstack3');if(raw)localData=JSON.parse(raw);}catch(e){}
-
     if(!fileOk){
-      // Drive inacessível — usa local sem sobrescrever
-      _cache=localData||emptyData();
-      seedIfEmpty();hideLoading();
+      _cache=localData||emptyData();seedIfEmpty();hideLoading();
       toast('Drive inacessível. Usando dados locais.','e');
       renderDashboard();return;
     }
-
     showLoading('Carregando dados da equipe...');
     const remote=await loadRemote();
-
     const remoteTs=_latestMovTs(remote);
     const localTs=_latestMovTs(localData);
-
     if(remote&&remote.receitas&&remote.receitas.length>0){
       if(localData&&localTs>remoteTs){
-        // Local é mais recente — sobe para o Drive (recuperação de dados)
         showLoading('Sincronizando dados mais recentes...');
         _cache=localData;
         await saveRemote(_cache);
         hideLoading();
-        toast('Dados locais mais recentes sincronizados com o Drive!','s');
+        toast('Dados locais mais recentes sincronizados!','s');
       } else {
-        // Drive é mais recente ou igual — usa Drive
         _cache=remote;
         localStorage.setItem('bstack3',JSON.stringify(_cache));
         hideLoading();
       }
       renderDashboard();setInterval(pollRemote,30000);return;
     }
-
-    // Drive vazio — sobe dados locais se existirem
     if(localData&&localData.receitas&&localData.receitas.length>0){
       showLoading('Subindo dados locais para o Drive...');
       _cache=localData;
@@ -1037,18 +1018,13 @@ async function initDriveData(){
       toast('Dados sincronizados com o Drive!','s');
       renderDashboard();setInterval(pollRemote,30000);return;
     }
-
-    // Tudo novo
     _cache=emptyData();seedIfEmpty();
     await saveRemote(_cache);
     hideLoading();renderDashboard();setInterval(pollRemote,30000);
-
   }catch(e){
     hideLoading();
-    let localData=null;
-    try{const raw=localStorage.getItem('bstack3');if(raw)localData=JSON.parse(raw);}catch(e2){}
-    _cache=localData||emptyData();
-    seedIfEmpty();renderDashboard();
+    let ld=null;try{ld=JSON.parse(localStorage.getItem('bstack3')||'null');}catch(e2){}
+    _cache=ld||emptyData();seedIfEmpty();renderDashboard();
     toast('Erro ao conectar ao Drive. Usando dados locais.','e');
   }
 }
@@ -1103,25 +1079,81 @@ async function pollRemote(){
   }catch(e){}
 }
 
-async function forcarSincLocal(){
-  const localData=JSON.parse(localStorage.getItem('bstack3')||'null');
-  if(!localData||!localData.receitas){toast('Nenhum dado local encontrado.','e');return;}
-  const localTs=_latestMovTs(localData);
-  const localDt=localTs?new Date(localTs).toLocaleString('pt-BR'):'sem data';
-  if(!confirm(`Substituir os dados do Drive pelos dados locais deste navegador?\n\nÚltima movimentação local: ${localDt}\n\nEssa ação não pode ser desfeita.`))return;
-  showLoading('Subindo dados locais para o Drive...');
-  _cache=localData;
-  await saveRemote(_cache);
-  hideLoading();
-  toast('Dados locais enviados para o Drive!','s');
-  renderDashboard();
+// ── Recuperação de dados do arquivo privado antigo (appDataFolder) ──
+async function recuperarDadosAntigos(){
+  if(!_gToken){toast('Faça login primeiro.','e');return;}
+  showLoading('Buscando arquivo antigo no Drive...');
+  try{
+    // Busca o arquivo privado antigo no appDataFolder
+    const search=await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${DRIVE_FILE_NAME}'&fields=files(id,name,modifiedTime)`,
+      {headers:{Authorization:'Bearer '+_gToken}}
+    );
+    const sj=await search.json();
+    if(!sj.files||sj.files.length===0){
+      hideLoading();toast('Arquivo antigo não encontrado no appDataFolder.','e');return;
+    }
+    const oldFileId=sj.files[0].id;
+    const modTime=new Date(sj.files[0].modifiedTime).toLocaleString('pt-BR');
+
+    // Lê o arquivo antigo
+    showLoading('Lendo dados do arquivo antigo...');
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${oldFileId}?alt=media`,
+      {headers:{Authorization:'Bearer '+_gToken}});
+    if(!r.ok){hideLoading();toast('Erro ao ler arquivo antigo.','e');return;}
+    const oldData=await r.json();
+
+    const nMovs=(oldData.movs||[]).length;
+    const nCdMovs=(oldData.cdMovs||[]).length;
+    const latestTs=_latestMovTs(oldData);
+    const latestDt=latestTs?new Date(latestTs).toLocaleString('pt-BR'):'—';
+
+    hideLoading();
+
+    if(!confirm(
+      `Arquivo antigo encontrado!\n\n` +
+      `Última modificação: ${modTime}\n` +
+      `Última movimentação: ${latestDt}\n` +
+      `Total de movimentações: ${nMovs+nCdMovs}\n\n` +
+      `Deseja mesclar esses dados com o Drive compartilhado?\n` +
+      `(movimentações duplicadas serão ignoradas automaticamente)`
+    ))return;
+
+    showLoading('Mesclando dados...');
+
+    // Merge: une movs do arquivo antigo com os do Drive atual
+    const current=_cache;
+    const myMovIds=new Set((current.movs||[]).map(m=>m.id));
+    const myCdIds=new Set((current.cdMovs||[]).map(m=>m.id));
+    const movsNovos=(oldData.movs||[]).filter(m=>!myMovIds.has(m.id));
+    const cdNovos=(oldData.cdMovs||[]).filter(m=>!myCdIds.has(m.id));
+
+    // Também mescla lotes que podem existir só no arquivo antigo
+    const myLoteIds=new Set((current.lotes||[]).map(l=>l.id));
+    const lotesNovos=(oldData.lotes||[]).filter(l=>!myLoteIds.has(l.id));
+
+    current.movs=[...(current.movs||[]),...movsNovos].sort((a,b)=>b.ts-a.ts);
+    current.cdMovs=[...(current.cdMovs||[]),...cdNovos].sort((a,b)=>b.ts-a.ts);
+    current.lotes=[...(current.lotes||[]),...lotesNovos];
+
+    _cache=current;
+    await saveRemote(_cache);
+    localStorage.setItem('bstack3',JSON.stringify(_cache));
+    hideLoading();
+    renderDashboard();
+    toast(`✅ Recuperados: ${movsNovos.length} movs + ${cdNovos.length} movs CD + ${lotesNovos.length} lotes!`,'s');
+
+  }catch(e){
+    hideLoading();
+    toast('Erro na recuperação: '+e.message,'e');
+  }
 }
 
 function updateSidebarStatus(){
   const el=document.getElementById('sidebar-foot-status');
   if(!el)return;
   if(_userEmail){
-    el.innerHTML=`☁️ Drive ativo<br><span style="font-family:var(--fm);font-size:9px;color:var(--tm)">${_userEmail}</span><br><span style="font-family:var(--fm);font-size:9px;color:var(--td);cursor:pointer;text-decoration:underline" onclick="forcarSincLocal()">↑ forçar sinc. local→Drive</span>`;
+    el.innerHTML=`☁️ Drive ativo<br><span style="font-family:var(--fm);font-size:9px;color:var(--tm)">${_userEmail}</span><br><span style="font-family:var(--fm);font-size:9px;color:var(--amber);cursor:pointer;text-decoration:underline" onclick="recuperarDadosAntigos()">↩ Recuperar dados antigos</span>`;
     el.style.cursor='default';
   } else {
     el.innerHTML='Dados locais<br><span style="font-family:var(--fm);font-size:9px;color:var(--amber);cursor:pointer" onclick="showLoginScreen()">▸ Entrar com Google</span>';
@@ -1134,7 +1166,7 @@ function getSkuQty(loteId,skuId){
   const d=getData();
   const lote=d.lotes.find(l=>l.id===loteId);
   if(!lote)return 0;
-  if(lote.emTanque)return 0; // lotes em tanque não entram no estoque
+  if(lote.emTanque===true)return 0; // lotes em tanque não entram no estoque
   const ls=lote.skus.find(s=>s.skuId===skuId);
   const inicial=ls?ls.qty:0;
   let q=inicial;
@@ -1161,6 +1193,7 @@ function fmtQtyDisplay(nomesku,unid){
 }
 
 function isLoteEncerrado(lote){
+  if(lote.emTanque===true)return false; // em tanque nunca é encerrado
   if(lote.encerradoEm)return true;
   return lote.skus.every(ls=>getSkuQty(lote.id,ls.skuId)===0);
 }
@@ -2461,6 +2494,7 @@ function salvarMov(){
   if(tipo==='ajuste'){const atual=getSkuQty(movLoteId,movSkuId);movQty=Math.abs(unids-atual);}
   d.movs.unshift({id:uid(),loteId:movLoteId,skuId:movSkuId,tipo,qty:movQty,obs,ts:Date.now()});
   if(!lote.encerradoEm&&isLoteEncerrado(lote))lote.encerradoEm=today();
+  else if(lote.encerradoEm&&!isLoteEncerrado(lote))lote.encerradoEm=null;
   save(d);closeMov();renderLotes();renderDashboard();
   toast(`${tipo==='saida'?'Saída':tipo==='entrada'?'Entrada':'Ajuste'} registrado!`,'s');
 }
@@ -2807,19 +2841,20 @@ function salvarEditMov(){
 }
 
 function cancelarMov(){
-  if(!confirm('Cancelar esta movimentação? Ela será removida do histórico e o estoque será ajustado.'))return;
   const d=getData();
   const idx=d.movs.findIndex(x=>x.id===_editMovId);
-  if(idx>-1){
-    const m=d.movs[idx];
-    const lm={};d.lotes.forEach(l=>lm[l.id]=l);
-    const l=lm[m.loteId];
-    d.movs.splice(idx,1);
-    // Re-verifica encerramento
-    if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
+  if(idx===-1){toast('Movimentação não encontrada.','e');return;}
+  const m=d.movs[idx];
+  const lm={};d.lotes.forEach(l=>lm[l.id]=l);
+  const l=lm[m.loteId];
+  d.movs.splice(idx,1);
+  if(d.cdMovs){
+    const cdIdx=d.cdMovs.findIndex(x=>x.loteId===m.loteId&&x.skuId===m.skuId&&x.ts===m.ts);
+    if(cdIdx>-1)d.cdMovs.splice(cdIdx,1);
   }
+  if(l&&l.encerradoEm&&!isLoteEncerrado(l)){l.encerradoEm=null;}
   save(d);closeEditMov();renderHistorico();renderDashboard();
-  toast('Movimentação cancelada.','s');
+  toast('Movimentação removida do histórico.','s');
 }
 
 function closeReceita(){document.getElementById('ov-receita').classList.remove('open');}
@@ -3220,7 +3255,7 @@ initData().then(()=>{
   migrarNomesSour();
   migrarEmTanque();
   renderDashboard();
-  setInterval(pollRemote,120000);
+  setInterval(pollRemote,30000);
 });
 </script>
 </body>
