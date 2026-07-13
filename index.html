@@ -1310,6 +1310,8 @@ function seedIfEmpty(){
     {id:'r10',nome:"Im Sour Baby",skus:[{id:'r10s1',nome:'Lata 473ml',tipo:'Lata',vol:'473ml'},{id:'r10s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r10s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r10s4',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'},{id:'r10s5',nome:'Barril 50L',tipo:'Barril',vol:'50L'}]},
     {id:'r11',nome:'Paranoid About Popcorn',skus:[{id:'r11s1',nome:'Lata 473ml',tipo:'Lata',vol:'473ml'},{id:'r11s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r11s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r11s4',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
     {id:'r12',nome:'Peter the Bitter',skus:[{id:'r12s1',nome:'Lata 473ml',tipo:'Lata',vol:'473ml'},{id:'r12s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r12s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r12s4',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'},{id:'r12s5',nome:'Barril 50L',tipo:'Barril',vol:'50L'}]},
+    {id:'r13',nome:'Galaxy Detox',skus:[{id:'r13s1',nome:'Lata 350ml',tipo:'Lata',vol:'350ml'},{id:'r13s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r13s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r13s4',nome:'Barril 50L',tipo:'Barril',vol:'50L'},{id:'r13s5',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
+    {id:'r14',nome:'Milky Way',skus:[{id:'r14s1',nome:'Lata 350ml',tipo:'Lata',vol:'350ml'},{id:'r14s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r14s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r14s4',nome:'Barril 50L',tipo:'Barril',vol:'50L'},{id:'r14s5',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
   ];
   d.receitas=receitas;
   if(!d.insumos)d.insumos={};
@@ -3257,9 +3259,25 @@ function migrarEmTanque(){
   }
 }
 
+function migrarNovasReceitas(){
+  // Insere novas receitas em bases de dados já existentes (não afeta seedIfEmpty)
+  const d=getData();
+  if(!d.receitas||!d.receitas.length)return;
+  const novas=[
+    {id:'r13',nome:'Galaxy Detox',skus:[{id:'r13s1',nome:'Lata 350ml',tipo:'Lata',vol:'350ml'},{id:'r13s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r13s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r13s4',nome:'Barril 50L',tipo:'Barril',vol:'50L'},{id:'r13s5',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
+    {id:'r14',nome:'Milky Way',skus:[{id:'r14s1',nome:'Lata 350ml',tipo:'Lata',vol:'350ml'},{id:'r14s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r14s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r14s4',nome:'Barril 50L',tipo:'Barril',vol:'50L'},{id:'r14s5',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
+  ];
+  const ids=d.receitas.map(r=>r.id);
+  const adicionadas=novas.filter(r=>!ids.includes(r.id));
+  if(!adicionadas.length)return;
+  d.receitas.push(...adicionadas);
+  save(d);
+}
+
 initData().then(()=>{
   migrarNomesSour();
   migrarEmTanque();
+  migrarNovasReceitas();
   renderDashboard();
   setInterval(pollRemote,30000);
 });
