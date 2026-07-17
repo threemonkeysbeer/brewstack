@@ -1006,14 +1006,18 @@ async function initDriveData(){
       if(localData&&localTs>remoteTs){
         showLoading('Sincronizando dados mais recentes...');
         _cache=localData;
-        await saveRemote(_cache);
-        hideLoading();
-        toast('Dados locais mais recentes sincronizados!','s');
       } else {
         _cache=remote;
-        localStorage.setItem('bstack3',JSON.stringify(_cache));
-        hideLoading();
       }
+      // Roda migração de receitas ANTES de qualquer render
+      const antesN=_cache.receitas.length;
+      _migrarReceitas(_cache);
+      const mudou=_cache.receitas.length!==antesN;
+      if(mudou)showLoading('Adicionando novas receitas ao Drive...');
+      if(mudou)await saveRemote(_cache);
+      localStorage.setItem('bstack3',JSON.stringify(_cache));
+      hideLoading();
+      if(mudou)toast('Novas receitas adicionadas!','s');
       renderDashboard();setInterval(pollRemote,30000);return;
     }
     if(localData&&localData.receitas&&localData.receitas.length>0){
@@ -3259,19 +3263,24 @@ function migrarEmTanque(){
   }
 }
 
-function migrarNovasReceitas(){
-  // Insere novas receitas em bases de dados já existentes (não afeta seedIfEmpty)
-  const d=getData();
-  if(!d.receitas||!d.receitas.length)return;
+// Aplica migração de receitas a um objeto de dados (sem salvar)
+function _migrarReceitas(d){
+  if(!d||!d.receitas)return;
   const novas=[
     {id:'r13',nome:'Galaxy Detox',skus:[{id:'r13s1',nome:'Lata 350ml',tipo:'Lata',vol:'350ml'},{id:'r13s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r13s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r13s4',nome:'Barril 50L',tipo:'Barril',vol:'50L'},{id:'r13s5',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
     {id:'r14',nome:'Milky Way',skus:[{id:'r14s1',nome:'Lata 350ml',tipo:'Lata',vol:'350ml'},{id:'r14s2',nome:'Barril 20L',tipo:'Barril',vol:'20L'},{id:'r14s3',nome:'Barril 30L',tipo:'Barril',vol:'30L'},{id:'r14s4',nome:'Barril 50L',tipo:'Barril',vol:'50L'},{id:'r14s5',nome:'Barril PET 30L',tipo:'Barril',vol:'30L'}]},
   ];
   const ids=d.receitas.map(r=>r.id);
-  const adicionadas=novas.filter(r=>!ids.includes(r.id));
-  if(!adicionadas.length)return;
-  d.receitas.push(...adicionadas);
-  save(d);
+  novas.filter(r=>!ids.includes(r.id)).forEach(r=>d.receitas.push(r));
+}
+
+function migrarNovasReceitas(){
+  // Fallback: aplica migração via save() caso initDriveData não tenha passado pelo bloco remoto
+  const d=getData();
+  if(!d.receitas||!d.receitas.length)return;
+  const antes=d.receitas.length;
+  _migrarReceitas(d);
+  if(d.receitas.length!==antes)save(d);
 }
 
 initData().then(()=>{
